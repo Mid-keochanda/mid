@@ -4,25 +4,18 @@ export const NAV_DATA = [
   {
     label: "ຂໍມູນໜ້າຫຼັກ",
     items: [
-      {
+     /* {
         title: "Dashboard",
          url: "/",
           icon: Icons.HomeIcon,
            items: [],
-      },
-
-      /*{
-        title: "ຂໍ້ມູນຝ່າຍ",
-        url: "/department",
-        icon: Icons.User,
-        items: [],
       },*/
       {
-        title: "ບັນທືກ",
-        url: "/approvals",
-        icon: Icons.User,
-        items: [],
-      },
+        title: "ຈັດການຫ້ອງປະຊຸມ",
+         url: "/room",
+          icon: Icons.HomeIcon,
+           items: [],
+      }, 
       {
         title: "ບັນທືກພະນັກງານ",
         url: "/user",
