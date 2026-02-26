@@ -11,13 +11,25 @@ export const NAV_DATA = [
            items: [],
       },
 
-      {
+      /*{
         title: "ຂໍ້ມູນຝ່າຍ",
         url: "/department",
         icon: Icons.User,
         items: [],
+      },*/
+      {
+        title: "ບັນທືກ",
+        url: "/approvals",
+        icon: Icons.User,
+        items: [],
       },
       {
+        title: "ບັນທືກພະນັກງານ",
+        url: "/user",
+        icon: Icons.User,
+        items: [],
+      },
+      /*{
         title: "ຕົວຢ່າງ",
         icon: Icons.Alphabet,
         items: [
@@ -31,56 +43,56 @@ export const NAV_DATA = [
           },
         ],
       },
-      // {
-      //   title: "Tables",
-      //   url: "/tables",
-      //   icon: Icons.Table,
-      //   items: [
-      //     {
-      //       title: "Tables",
-      //       url: "/tables",
-      //     },
-      //   ],
-      // },
+       {
+         title: "Tables",
+         url: "/tables",
+         icon: Icons.Table,
+         items: [
+           {
+             title: "Tables",
+             url: "/tables",
+           },
+         ],
+       },
     ],
   },
-  // {
-  //   label: "OTHERS",
-  //   items: [
-  //     {
-  //       title: "Charts",
-  //       icon: Icons.PieChart,
-  //       items: [
-  //         {
-  //           title: "Basic Chart",
-  //           url: "/charts/basic-chart",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       title: "UI Elements",
-  //       icon: Icons.FourCircle,
-  //       items: [
-  //         {
-  //           title: "Alerts",
-  //           url: "/ui-elements/alerts",
-  //         },
-  //         {
-  //           title: "Buttons",
-  //           url: "/ui-elements/buttons",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       title: "Authentication",
-  //       icon: Icons.Authentication,
-  //       items: [
-  //         {
-  //           title: "Sign In",
-  //           url: "/auth/sign-in",
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
+  {
+     label: "OTHERS",
+     items: [
+       {
+         title: "Charts",
+         icon: Icons.PieChart,
+         items: [
+           {
+             title: "Basic Chart",
+             url: "/charts/basic-chart",
+           },
+         ],
+       },
+       {
+         title: "UI Elements",
+         icon: Icons.FourCircle,
+         items: [
+           {
+             title: "Alerts",
+             url: "/ui-elements/alerts",
+           },
+           {
+             title: "Buttons",
+             url: "/ui-elements/buttons",
+           },
+       ],
+       },
+       {
+         title: "Authentication",
+         icon: Icons.Authentication,
+         items: [
+           {
+             title: "Sign In",
+             url: "/auth/sign-in",
+           },
+         ],
+       },*/
+    ],
+   },
 ];

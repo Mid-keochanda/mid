@@ -1,4 +1,4 @@
-import axiosClient from "../plugins/axiosClient";
+import axiosClient from "../libs/axiosClient";
 const BASE_URL = process.env.VITE_BASE_URL;
 export async function login(data: any) {
   try {

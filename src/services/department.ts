@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "https://688c72ebcd9d22dda5cd2bde.mockapi.io/department";
+const BASE_URL = "http://172.18.9.181:5000/api";
 
 export interface Department {
   id: string;
