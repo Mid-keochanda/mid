@@ -4,22 +4,28 @@ export const NAV_DATA = [
   {
     label: "ຂໍມູນໜ້າຫຼັກ",
     items: [
-     /* {
+      {
         title: "Dashboard",
          url: "/",
           icon: Icons.HomeIcon,
            items: [],
-      },*/
+      },
+    {
+        title: "ເພີ່ມອຸປະກອນກາງ",
+        url: "/equipment",
+        icon: Icons.Table, // ໃຊ້ໄອຄັອນຕາຕະລາງ ສື່ເຖິງການຈັດການລາຍການສາງ
+        items: [],
+      },
       {
         title: "ຈັດການຫ້ອງປະຊຸມ",
-         url: "/room",
-          icon: Icons.HomeIcon,
-           items: [],
+        url: "/room",
+        icon: Icons.Calendar, // ໃຊ້ໄອຄັອນປະຕິທິນ ສື່ເຖິງການຈອງ ຫຼື ຕາຕະລາງຫ້ອງປະຊຸມ
+        items: [],
       }, 
       {
-        title: "ບັນທືກພະນັກງານ",
+        title: "ບັນທຶກພະນັກງານ",
         url: "/user",
-        icon: Icons.User,
+        icon: Icons.User, // ໃຊ້ໄອຄັອນຜູ້ໃຊ້ ໂດຍກົງ
         items: [],
       },
       /*{
