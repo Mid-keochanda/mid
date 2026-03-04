@@ -144,7 +144,7 @@ export default function RoomsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-slate-50/50 text-[11px] font-black uppercase text-slate-400 border-b tracking-wider">
+                <tr className="bg-slate-50/50 text-[15px] font-black uppercase text-slate-400 border-b tracking-wider">
                   <th className="p-6">ID</th>
                   <th className="p-6 text-center">ຮູບພາບ</th>
                   <th className="p-6">ຊື່ຫ້ອງປະຊຸມ</th>
@@ -158,18 +158,18 @@ export default function RoomsPage() {
               <tbody className="divide-y divide-slate-100">
                 {filteredRooms.map((room) => (
                   <tr key={room.room_id} className="hover:bg-slate-50/50 group transition-all">
-                    <td className="p-6 font-mono text-[10px] text-slate-300 font-bold">#{room.room_id}</td>
+                    <td className="p-6 font-mono text-[15px] text-slate-300 font-bold">#{room.room_id}</td>
                     <td className="p-6">
                       <div className="w-16 h-11 bg-slate-100 rounded-xl overflow-hidden mx-auto border border-slate-200 shadow-inner relative group-hover:border-emerald-200 transition-colors">
                         <img src={room.image_url || 'https://via.placeholder.com/150'} className="w-full h-full object-cover" alt="room" />
                         {!room.image_url && <FiImage className="absolute inset-0 m-auto text-slate-300" />}
                       </div>
                     </td>
-                    <td className="p-6 font-black text-slate-800 text-lg tracking-tight group-hover:text-emerald-600 transition-colors">{room.room_name}</td>
+                    <td className="p-6 font-black text-slate-500 text-lg tracking-tight group-hover:text-emerald-600 transition-colors">{room.room_name}</td>
                     <td className="p-6">
-                      <div className="font-bold text-slate-500 text-sm flex items-center gap-2">
+                      <div className="font-bold text-slate-600 text-sm flex items-center gap-1">
                         {/* ✅ ໄອຄັອນສະຖານທີ່ */}
-                        <FiMapPin className="text-emerald-400" size={16}/> {room.location}
+                        <FiMapPin className="text-emerald-600" size={16}/> {room.location}
                       </div>
                     </td>
                     <td className="p-6 text-center">
@@ -178,12 +178,12 @@ export default function RoomsPage() {
                        </span>
                     </td>
                     <td className="p-6 text-center">
-                      <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1.5 justify-center w-fit mx-auto ${room.status === 'active' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-slate-200 text-slate-500'}`}>
+                      <span className={`px-4 py-1.5 rounded-xl text-[13px] font-black uppercase flex items-center gap-1.5 justify-center w-fit mx-auto ${room.status === 'active' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-slate-200 text-slate-500'}`}>
                         <FiActivity size={12} /> {room.status === 'active' ? 'ພ້ອມໃຊ້' : 'ປິດປັບປຸງ'}
                       </span>
                     </td>
                     <td className="p-6">
-                      <div className="flex flex-col gap-1 text-[10px] font-bold">
+                      <div className="flex flex-col gap-1 text-[13px] font-bold">
                         <div className="flex items-center gap-1.5 text-slate-400"><FiCalendar size={12}/> {formatDate(room.createdAt)}</div>
                         <div className="flex items-center gap-1.5 text-emerald-500"><FiClock size={12}/> {formatDate(room.updatedAt)}</div>
                       </div>
@@ -246,8 +246,8 @@ export default function RoomsPage() {
               </div>
 
               <div className="flex gap-4 pt-6">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 font-bold text-slate-400 uppercase text-[10px] tracking-widest hover:text-slate-600 transition-colors">ຍົກເລີກ</button>
-                <button type="submit" className="flex-[2] bg-emerald-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all uppercase text-[10px] tracking-widest">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-[1] bg-red-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-red-100 hover:bg-red-700 transition-all uppercase text-[15px] tracking-widest">ຍົກເລີກ</button>
+                <button type="submit" className="flex-[1] bg-emerald-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all uppercase text-[15px] tracking-widest">
                   ບັນທຶກຂໍ້ມູນ
                 </button>
               </div>

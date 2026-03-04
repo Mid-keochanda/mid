@@ -100,7 +100,7 @@ export default function EquipmentPage() {
               <FiPackage size={28} />
             </div>
             <div>
-              <h1 className="text-xl font-black tracking-tight leading-none">ສາງພັດສະດຸ</h1>
+              <h1 className="text-2xl font-black tracking-tight leading-none">ສາງພັດສະດຸ</h1>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Inventory Management</p>
             </div>
           </div>
@@ -118,9 +118,9 @@ export default function EquipmentPage() {
             </div>
             <button 
               onClick={() => { setCurrentItem(initialItemState); setIsModalOpen(true); }}
-              className="bg-slate-900 hover:bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black transition-all shadow-md flex items-center justify-center gap-2 text-xs uppercase"
+              className="bg-slate-800 hover:bg-indigo-600 text-white px-15 py-1.5 rounded-2xl font-black transition-all shadow-md flex items-center justify-center gap-2 text-xs uppercase"
             >
-              <FiPlus strokeWidth={3} /> ເພີ່ມໃໝ່
+              <FiPlus strokeWidth={5} /> ເພີ່ມໃໝ່
             </button>
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function EquipmentPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50/50 text-[11px] font-black uppercase text-slate-400 tracking-widest border-b">
+                <tr className="bg-slate-50/50 text-[15px] font-black uppercase text-slate-400 tracking-widest border-b">
                   <th className="p-6">ID</th>
                   <th className="p-6">ຊື່ອຸປະກອນ</th>
                   <th className="p-6">ຫົວໜ່ວຍ</th>
@@ -143,7 +143,7 @@ export default function EquipmentPage() {
               <tbody className="divide-y divide-slate-100">
                 {filteredItems.map((item) => (
                   <tr key={item.id} className="hover:bg-indigo-50/20 transition-all group">
-                    <td className="p-6 font-mono text-[10px] text-slate-300 font-bold">#{item.id}</td>
+                    <td className="p-6 font-mono text-[14px] text-slate-300 font-bold">#{item.id}</td>
                     
                     {/* ຊື່ອຸປະກອນ */}
                     <td className="p-6">
@@ -179,11 +179,11 @@ export default function EquipmentPage() {
                     {/* ວັນທີສະແດງຜົນ */}
                     <td className="p-6">
                       <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
-                          <FiCalendar size={12}/> ສ້າງ: {formatDateTime(item, 'create')}
+                        <div className="flex items-center gap-2 text-[13px] font-bold text-slate-400">
+                          <FiCalendar size={12}/> {formatDateTime(item, 'create')}
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-indigo-400">
-                          <FiClock size={12}/> ອັບເດດ: {formatDateTime(item, 'update')}
+                        <div className="flex items-center gap-2 text-[13px] font-bold text-indigo-400">
+                          <FiClock size={12}/> {formatDateTime(item, 'update')}
                         </div>
                       </div>
                     </td>
@@ -264,8 +264,8 @@ export default function EquipmentPage() {
               </div>
 
               <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 font-bold text-slate-300 uppercase text-xs tracking-widest">ຍົກເລີກ</button>
-                <button type="submit" className="flex-[2] bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-indigo-700 transition-all uppercase text-xs">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-[1] bg-red-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-red-100 hover:bg-red-700 transition-all uppercase text-[15px] tracking-widest">ຍົກເລີກ</button>
+                <button type="submit" className="flex-[1] bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all uppercase text-[15px] tracking-widest">
                   ບັນທຶກຂໍ້ມູນ
                 </button>
               </div>
