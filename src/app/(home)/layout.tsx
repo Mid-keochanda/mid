@@ -10,7 +10,7 @@ import { Header } from "@/components/Layouts/header";
 import type { Metadata } from "next";
 import NextTopLoader from "nextjs-toploader";
 import type { PropsWithChildren } from "react";
-import { Providers } from "./providers";
+import { Providers } from "../providers";
 import { ToastContainer, toast } from 'react-toastify';
 
 export const metadata: Metadata = {

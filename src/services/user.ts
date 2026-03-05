@@ -1,5 +1,5 @@
 import axiosClient from "../plugins/axiosClient";
-const BASE_URL = process.env.VITE_BASE_URL;
+const BASE_URL = process.env.BASE_URL;
 export async function login(data: any) {
   try {
     const respone = await axiosClient.post(`${BASE_URL}/users/login`, data);
@@ -54,3 +54,5 @@ export async function changePass(data: any) {
     throw error;
   }
 }
+
+ 

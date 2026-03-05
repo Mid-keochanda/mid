@@ -10,15 +10,28 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // 1. Import useRouter ເຂົ້າມາ
 import { LogOutIcon, SettingsIcon, UserIcon } from "./icons";
 
 export function UserInfo() {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter(); // 2. ປະກາດໃຊ້ router
 
   const USER = {
     name: "John Smith",
     email: "johnson@nextadmin.com",
     img: "/images/user/user-03.png",
+  };
+
+  // 3. ສ້າງຟັງຊັນ handleLogout
+  const handleLogout = () => {
+    setIsOpen(false);
+    
+    // ຖ້າເຈົ້າມີການໃຊ້ cookies ຫຼື localStorage ສາມາດລຶບໄດ້ຢູ່ນີ້
+    // localStorage.removeItem("token");
+    
+    // ສັ່ງໃຫ້ເດັ້ງໄປໜ້າ login
+    router.push("/login");
   };
 
   return (
@@ -29,11 +42,10 @@ export function UserInfo() {
         <figure className="flex items-center gap-3">
           <Image
             src={USER.img}
-            className="size-12"
+            className="size-12 rounded-full" // ເພີ່ມ rounded-full ເພື່ອຄວາມສວຍງາມ
             alt={`Avatar of ${USER.name}`}
-            role="presentation"
-            width={200}
-            height={200}
+            width={48} // ປັບ width/height ໃຫ້ພໍດີກັບ size-12 (48px)
+            height={48}
           />
           <figcaption className="flex items-center gap-1 font-medium text-dark dark:text-dark-6 max-[1024px]:sr-only">
             <span>{USER.name}</span>
@@ -59,11 +71,10 @@ export function UserInfo() {
         <figure className="flex items-center gap-2.5 px-5 py-3.5">
           <Image
             src={USER.img}
-            className="size-12"
+            className="size-12 rounded-full"
             alt={`Avatar for ${USER.name}`}
-            role="presentation"
-            width={200}
-            height={200}
+            width={48}
+            height={48}
           />
 
           <figcaption className="space-y-1 text-base font-medium">
@@ -104,9 +115,10 @@ export function UserInfo() {
         <hr className="border-[#E8E8E8] dark:border-dark-3" />
 
         <div className="p-2 text-base text-[#4B5563] dark:text-dark-6">
+          {/* 4. ແກ້ໄຂປຸ່ມ Log out ໃຫ້ເອີ້ນໃຊ້ handleLogout */}
           <button
             className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[9px] hover:bg-gray-2 hover:text-dark dark:hover:bg-dark-3 dark:hover:text-white"
-            onClick={() => setIsOpen(false)}
+            onClick={handleLogout}
           >
             <LogOutIcon />
 
