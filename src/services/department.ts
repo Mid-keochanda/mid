@@ -25,6 +25,7 @@ export interface LoginResponse {
 
 export interface Booking {
   booking_id?: number;
+  id?: number; 
   room_id: number;
   user_id: number;
   title: string;
@@ -33,12 +34,14 @@ export interface Booking {
   status: 'Pending' | 'Approved' | 'Rejected';
   is_recurring: boolean;
   recur_pattern: 'none' | 'daily' | 'weekly' | 'monthly';
-  attendeeCount: number; 
+  attendeeCount: number;
+  // ເພີ່ມເພື່ອຮອງຮັບຂໍ້ມູນທີ່ມາຈາກ Relation ຂອງ Database
+  room?: { room_name: string };
+  user?: { full_name: string };
 }
 
 // --- Functions ---
 
-// ຟັງຊັນ Login (ໂຕເດີມຂອງທ່ານ)
 export async function login(data: any): Promise<LoginResponse> {
   const response = await API.post<LoginResponse>("/users/login", data);
   if (response.data.access_token) {
@@ -47,25 +50,57 @@ export async function login(data: any): Promise<LoginResponse> {
   return response.data;
 }
 
-// ຟັງຊັນຈັດການຂໍ້ມູນການຈອງ (Booking Service)
 export const bookingService = {
-  getAll: () => API.get("/bookings"),
+  // 🚩 ປັບປຸງ getAll: ເພື່ອໃຫ້ແນ່ໃຈວ່າຂໍ້ມູນທີ່ໄດ້ມາ ມີໂຄງສ້າງທີ່ຄົບຖ້ວນ
+  getAll: async () => {
+    try {
+      const res = await API.get("/bookings");
+      // ຖ້າ Backend ສົ່ງມາໃນຮູບແບບ { data: [...] } ຫຼື [...] ເລີຍ
+      const rawData = Array.isArray(res.data) ? res.data : (res.data.data || []);
+      return { ...res, data: rawData }; 
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+      throw error;
+    }
+  },
   
-  // ດຶງຂໍ້ມູນຫ້ອງ ແລະ ຈັດການໃຫ້ເປັນ Array
   getRooms: async () => {
-    const res = await API.get("/rooms");
-    return Array.isArray(res.data) ? res.data : res.data.data || [];
+    try {
+      const res = await API.get("/rooms");
+      return Array.isArray(res.data) ? res.data : (res.data.data || []);
+    } catch (error) {
+      console.error("Error fetching rooms:", error);
+      return [];
+    }
   },
 
-  // ດຶງຂໍ້ມູນຜູ້ໃຊ້ (ສຳລັບເອົາມາໃສ່ໃນ Dropdown)
   getUsers: async () => {
-    const res = await API.get("/users");
-    return Array.isArray(res.data) ? res.data : res.data.data || [];
+    try {
+      const res = await API.get("/users");
+      return Array.isArray(res.data) ? res.data : (res.data.data || []);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      return [];
+    }
   },
 
   create: (data: Booking) => API.post("/bookings", data),
-  update: (id: number, data: Booking) => API.put(`/bookings/${id}`, data),
-  delete: (id: number) => API.delete(`/bookings/${id}`),
+
+  // 🚩 ສ່ວນ Update: ກວດເຊັກ ID ແລະ ກັ່ນຕອງຂໍ້ມູນກ່ອນສົ່ງ
+  update: (id: number | string, data: Booking) => {
+    if (!id) {
+      console.error("❌ Update Error: ບໍ່ມີ ID ສົ່ງມາ");
+      return Promise.reject(new Error("Missing Booking ID"));
+    }
+    
+    // ແຍກຂໍ້ມູນທີ່ບໍ່ກ່ຽວຂ້ອງກັບ Database Table ອອກກ່ອນສົ່ງ (ເຊັ່ນ object ຂອງ room ຫຼື user)
+    // ເພື່ອປ້ອງກັນ Error ຈາກ Backend ທີ່ກວດສອບ Payload ເຂັ້ມງວດ
+    const { booking_id, id: _, room, user, ...payload } = data as any; 
+    
+    return API.put(`/bookings/${id}`, payload);
+  },
+
+  delete: (id: number | string) => API.delete(`/bookings/${id}`),
 };
 
 export default API;
