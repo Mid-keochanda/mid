@@ -2,7 +2,7 @@ import axios from "axios";
 
 // ສ້າງ instance ຂອງ axios
 const API = axios.create({
-  baseURL: "http://172.18.9.211:5000/api", 
+  baseURL: 'http://172.18.9.182:5000/api', 
   headers: { "Content-Type": "application/json" },
 });
 
