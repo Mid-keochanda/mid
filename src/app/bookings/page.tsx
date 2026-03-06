@@ -4,8 +4,10 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { toast, Toaster } from 'react-hot-toast';
-import axiosClient from '@/libs/axiosClient';
+import axiosClient from '@/lib/axiosClient';
 import { FiCalendar, FiClock, FiUsers, FiHome, FiX } from 'react-icons/fi';
+
+const API_PATH = '/bookings'; 
 
 export default function BookingsPage() {
   // 1. ກຳນົດ Type ເປັນ any[] ເພື່ອແກ້ Error 2345

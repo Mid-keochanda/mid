@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
-import axiosClient from '@/libs/axiosClient';
+import axiosClient from '@/lib/axiosClient';
 import { FiEdit2, FiTrash2, FiPlus, FiPackage, FiCalendar, FiClock, FiBox, FiSearch, FiTag, FiCheckSquare, FiSquare } from 'react-icons/fi';
 
 const API_PATH = '/equipment'; 

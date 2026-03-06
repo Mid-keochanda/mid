@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
-import axiosClient from '@/libs/axiosClient';
+import axiosClient from '@/lib/axiosClient';
 import { 
   FiCalendar, FiClock, FiUserPlus, FiEdit, FiTrash2, 
   FiMail, FiLock, FiBriefcase, FiUsers, FiSearch, FiShield, FiHash 
