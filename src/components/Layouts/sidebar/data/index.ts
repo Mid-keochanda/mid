@@ -2,7 +2,7 @@ import * as Icons from "../icons";
 
 export const NAV_DATA = [
   {
-    label: "ຂໍມູນໜ້າຫຼັກ",
+    label: "ຂໍ້ມູນໜ້າຫຼັກ",
     items: [
       {
         title: "Dashboard",
@@ -11,11 +11,23 @@ export const NAV_DATA = [
            items: [],
       },
     {
+        title: "ລາຍການສິ່ງຂອງ",
+        url: "/catering-items",
+        icon: Icons.Table, 
+        items: [],
+      },
+    {
         title: "ເພີ່ມອຸປະກອນກາງ",
         url: "/equipment",
         icon: Icons.Table, // ໃຊ້ໄອຄັອນຕາຕະລາງ ສື່ເຖິງການຈັດການລາຍການສາງ
         items: [],
       },
+      {
+        title: "ຈັດການຫ້ອງປະຊຸມ",
+        url: "/bookings",
+        icon: Icons.Calendar, // ໃຊ້ໄອຄັອນປະຕິທິນ ສື່ເຖິງການຈອງ ຫຼື ຕາຕະລາງຫ້ອງປະຊຸມ
+        items: [],
+      }, 
       {
         title: "ຈັດການຫ້ອງປະຊຸມ",
         url: "/room",
