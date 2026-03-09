@@ -23,8 +23,8 @@ export const NAV_DATA = [
         items: [],
       },
       {
-        title: "ການຈອງຫ້ອງປະຊຸມ",
-        url: "/bookings",
+        title: "ການອະນຸມັດ",
+        url: "/approvals",
         icon: Icons.Calendar, // ໃຊ້ໄອຄັອນປະຕິທິນ ສື່ເຖິງການຈອງ ຫຼື ຕາຕະລາງຫ້ອງປະຊຸມ
         items: [],
       }, 
