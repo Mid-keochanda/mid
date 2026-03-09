@@ -20,7 +20,7 @@ export default function BookingPage() {
   const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const fetchData = useCallback(async () => {
+ const fetchData = useCallback(async () => {
     try {
       const [resB, roomsData, usersData, equipData, cateringData] = await Promise.all([
         bookingService.getAll(),
@@ -81,16 +81,16 @@ export default function BookingPage() {
   const addCateringField = () => setSelectedCaterings([...selectedCaterings, { catering_item_id: 0, quantity: 1 }]);
   const removeCateringField = (index: number) => setSelectedCaterings(selectedCaterings.filter((_, i) => i !== index));
   const updateCatering = (index: number, field: string, value: any) => {
-    const newItems = [...selectedCaterings] as any;
-    newItems[index][field] = Number(value);
+    const newItems = [...selectedCaterings];
+    newItems[index] = { ...newItems[index], [field]: Number(value) };
     setSelectedCaterings(newItems);
   };
 
   const addEquipmentField = () => setSelectedEquipments([...selectedEquipments, { equipment_id: 0, quantity: 1 }]);
   const removeEquipmentField = (index: number) => setSelectedEquipments(selectedEquipments.filter((_, i) => i !== index));
   const updateEquipment = (index: number, field: string, value: any) => {
-    const newItems = [...selectedEquipments] as any;
-    newItems[index][field] = Number(value);
+    const newItems = [...selectedEquipments];
+    newItems[index] = { ...newItems[index], [field]: Number(value) };
     setSelectedEquipments(newItems);
   };
 
@@ -269,13 +269,14 @@ export default function BookingPage() {
                 </div>
               </div>
 
-              {/* ປັບປຸງການສະແດງ Catering */}
+              {/* ແກ້ໄຂການສະແດງ Catering ໃນ View Detail */}
               {(selectedBooking.booking_caterings?.length > 0 || selectedBooking.caterings?.length > 0) && (
                 <div className="p-6 bg-orange-50/30 dark:bg-orange-900/10 rounded-[2rem] border border-orange-100/50 dark:border-orange-900/30">
                    <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-3">🍽️ ອາຫານ ແລະ ເຄື່ອງດື່ມ</p>
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {(selectedBooking.booking_caterings || selectedBooking.caterings).map((bc: any, idx: number) => {
-                        const itemInfo = allCaterings.find(c => c.Id === (bc.catering_item_id || bc.catering_item?.Id));
+                        // ກວດສອບ ID ຈາກທັງ 2 ບ່ອນ (bc.Id ມາຈາກ backend ໂດຍກົງ ຫຼື bc.catering_item_id)
+                        const itemInfo = allCaterings.find(c => c.Id === (bc.catering_item_id || bc.catering_item?.Id || bc.Id));
                         return (
                           <div key={idx} className="flex justify-between items-center bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                             <span className="text-sm font-bold">{itemInfo?.Name || bc.catering_item?.Name || 'ລາຍການອາຫານ'}</span>
@@ -287,13 +288,13 @@ export default function BookingPage() {
                 </div>
               )}
 
-              {/* ປັບປຸງການສະແດງ Equipment */}
+              {/* ແກ້ໄຂການສະແດງ Equipment ໃນ View Detail */}
               {(selectedBooking.booking_equipments?.length > 0 || selectedBooking.equipments?.length > 0) && (
                 <div className="p-6 bg-blue-50/30 dark:bg-blue-900/10 rounded-[2rem] border border-blue-100/50 dark:border-blue-900/30">
                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-3">🛠️ ອຸປະກອນທີ່ພ່ວງມາ</p>
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {(selectedBooking.booking_equipments || selectedBooking.equipments).map((be: any, idx: number) => {
-                        const itemInfo = allEquipments.find(e => e.id === (be.equipment_id || be.equipment?.id));
+                        const itemInfo = allEquipments.find(e => e.id === (be.equipment_id || be.equipment?.id || be.id));
                         return (
                           <div key={idx} className="flex justify-between items-center bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                             <span className="text-sm font-bold">{itemInfo?.item_name || be.equipment?.item_name || 'ອຸປະກອນ'}</span>
@@ -348,17 +349,16 @@ export default function BookingPage() {
                 <button 
                   onClick={() => { 
                     setIsViewModalOpen(false); 
-                    // ເອົາຂໍ້ມູນອາຫານ ແລະ ອຸປະກອນ ຈາກ selectedBooking ມາໃສ່ State ຂອງ Form
                     const bookingEquips = selectedBooking.booking_equipments || selectedBooking.equipments || [];
                     const bookingCats = selectedBooking.booking_caterings || selectedBooking.caterings || [];
                     
                     setSelectedEquipments(bookingEquips.map((be: any) => ({
-                        equipment_id: be.equipment_id || be.equipment?.id,
+                        equipment_id: be.equipment_id || be.equipment?.id || be.id,
                         quantity: be.quantity
                     })));
                     
                     setSelectedCaterings(bookingCats.map((bc: any) => ({
-                        catering_item_id: bc.catering_item_id || bc.catering_item?.Id,
+                        catering_item_id: bc.catering_item_id || bc.catering_item?.Id || bc.Id,
                         quantity: bc.quantity
                     })));
 
@@ -389,7 +389,6 @@ export default function BookingPage() {
             
             <form key={selectedBooking?.booking_id || 'new'} onSubmit={handleSubmit} className="p-8 overflow-y-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Column 1: ຂໍ້ມູນຫຼັກ */}
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
@@ -440,9 +439,8 @@ export default function BookingPage() {
                   </div>
                 </div>
 
-                {/* Column 2: ອາຫານ, ອຸປະກອນ ແລະ Recurring */}
                 <div className="space-y-6">
-                  {/* Catering */}
+                  {/* Catering Form Section */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-xs font-bold text-slate-400 uppercase ml-1">🍽️ ສັ່ງອາຫານ/ເຄື່ອງດື່ມ</label>
@@ -458,7 +456,9 @@ export default function BookingPage() {
                           >
                             <option value="0">ເລືອກລາຍການ</option>
                             {allCaterings.map((cat: any) => (
-                              <option key={cat.Id} value={cat.Id}>{cat.Name} ({cat.price} ກີບ)</option>
+                              <option key={cat.Id} value={cat.Id}>
+                                {cat.Name} ({cat.price} ກີບ)
+                              </option>
                             ))}
                           </select>
                           <input type="number" min="1" value={item.quantity} onChange={(e) => updateCatering(index, 'quantity', e.target.value)} className="w-16 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl outline-none text-center text-sm dark:text-white border dark:border-slate-700" />
@@ -468,7 +468,7 @@ export default function BookingPage() {
                     </div>
                   </div>
 
-                  {/* Equipments */}
+                  {/* Equipments Form Section */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-xs font-bold text-slate-400 uppercase ml-1">🛠️ ອຸປະກອນເສີມ</label>
@@ -488,7 +488,7 @@ export default function BookingPage() {
                     </div>
                   </div>
 
-                  {/* Recurring */}
+                  {/* Recurring Form Section */}
                   <div className="bg-blue-50/50 dark:bg-blue-900/10 p-5 rounded-[1.5rem] border border-blue-100 dark:border-blue-900/30 space-y-3">
                     <div className="flex items-center gap-3">
                       <input type="checkbox" name="is_recurring" value="true" defaultChecked={selectedBooking?.is_recurring == 1 || selectedBooking?.is_recurring === true} className="w-5 h-5 accent-blue-600 cursor-pointer" id="recur-check" />
@@ -504,7 +504,6 @@ export default function BookingPage() {
                 </div>
               </div>
 
-              {/* Submit Button */}
               <div className="mt-8">
                 <button type="submit" className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-blue-700 shadow-xl shadow-blue-200 dark:shadow-none transition-all active:scale-[0.98]">
                   ຢືນຢັນການບັນທຶກ
