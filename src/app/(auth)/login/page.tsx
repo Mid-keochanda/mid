@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Lock, User, ArrowRight, Eye, EyeOff, ShieldCheck, AlertCircle } from "lucide-react";
-import { login } from "@/services/department";
+import { login } from "@/services/authen";
 import Cookies from "js-cookie";
 
 export default function LoginPage() {
@@ -111,26 +111,6 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
-
-          {/* ເລືອກສິດການໃຊ້ງານ */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold ml-1 text-gray-700">ສິດການໃຊ້ງານ</label>
-            <div className="relative">
-              <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <select
-                className="w-full pl-12 pr-10 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none appearance-none cursor-pointer focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-                value={formData.role}
-                onChange={(e) => setFormData({...formData, role: e.target.value})}
-              >
-                <option value="user">ພະນັກງານ (User)</option>
-                <option value="admin">ຜູ້ດູແລລະບົບ (Admin)</option>
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-              </div>
-            </div>
-          </div>
-
           {/* ປຸ່ມ Submit */}
           <button
             type="submit"
