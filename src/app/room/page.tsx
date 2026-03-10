@@ -1,8 +1,7 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
 import axiosClient from '@/lib/axiosClient';
-// ✅ ເພີ່ມ Icons ທີ່ກ່ຽວກັບຫ້ອງປະຊຸມ: FiHome (ຫ້ອງ), FiSearch (ຄົ້ນຫາ), FiLayers (ຊັ້ນ/ຕຶກ), FiImage (ຮູບ)
 import { 
   FiCalendar, FiClock, FiPlus, FiEdit2, FiTrash2, 
   FiMapPin, FiUsers, FiHome, FiSearch, FiLayers, FiImage, FiActivity 
@@ -17,53 +16,42 @@ export default function RoomsPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const initialRoomState = { 
-    room_id: "", 
-    room_name: "", 
-    location: "", 
-    capacity: 0, 
-    image_url: "", 
-    status: "active" 
+    room_id: "", room_name: "", location: "", capacity: 0, image_url: "", status: "active" 
   };
   const [currentRoom, setCurrentRoom] = useState<any>(initialRoomState);
 
+  // ຟັງຊັນຈັດຮູບແບບວັນທີໃຫ້ສັ້ນ ແລະ ອ່ານງ່າຍ
   const formatDate = (dateString: string) => {
     if (!dateString) return "---";
-    return new Date(dateString).toLocaleString('lo-LA', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit'
-    });
+    const d = new Date(dateString);
+    return d.toLocaleDateString('lo-LA', { day: '2-digit', month: '2-digit', year: '2-digit' }) + 
+           " " + d.toLocaleTimeString('lo-LA', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const fetchRooms = async () => {
+  const fetchRooms = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axiosClient.get(API_PATH);
       const rawData = Array.isArray(res.data) ? res.data : (res.data.rooms || res.data.data || []);
-      const sanitizedData = rawData.map((item: any) => ({
-        ...item,
-        room_id: item.room_id || item.id,
-        createdAt: item.createdAt || item.created_at,
-        updatedAt: item.updatedAt || item.updated_at
-      }));
-      setRooms(sanitizedData);
+      setRooms(rawData.map((item: any) => ({ ...item, room_id: item.room_id || item.id })));
     } catch (error) {
       toast.error("ບໍ່ສາມາດໂຫຼດຂໍ້ມູນໄດ້");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchRooms(); }, []);
+  useEffect(() => { fetchRooms(); }, [fetchRooms]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (currentRoom.room_id) {
         await axiosClient.put(`${API_PATH}/${currentRoom.room_id}`, currentRoom);
-        toast.success("ອັບເດດສຳເລັດ");
+        toast.success("ອັບເດດແລ້ວ");
       } else {
         await axiosClient.post(API_PATH, currentRoom);
-        toast.success("ເພີ່ມຫ້ອງໃໝ່ແລ້ວ");
+        toast.success("ເພີ່ມແລ້ວ");
       }
       setIsModalOpen(false);
       fetchRooms();
@@ -90,108 +78,115 @@ export default function RoomsPage() {
   );
 
   if (loading) return (
-    <div className="h-screen flex flex-col items-center justify-center bg-[#F8FAFC] gap-4">
-      <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-      <p className="font-black text-emerald-600 text-xl tracking-tighter uppercase animate-pulse">Loading Rooms...</p>
+    <div className="h-screen flex items-center justify-center bg-slate-50">
+      <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8 font-sans">
+    <div className="min-h-screen bg-[#F1F5F9] p-4 md:p-6 font-sans text-slate-900">
       <Toaster position="top-right" />
       
-      <div className="max-w-full mx-auto space-y-6">
+      <div className="max-w-full mx-auto space-y-5">
         {/* --- Header Section --- */}
-        <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="bg-white px-6 py-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-4">
-            {/* ✅ ປ່ຽນໄອຄັອນຫົວຂໍ້ເປັນ FiHome */}
-            <div className="bg-emerald-600 p-4 rounded-2xl text-white shadow-lg shadow-emerald-100">
-              <FiHome size={28} strokeWidth={2.5} />
+            <div className="bg-emerald-600 p-2.5 rounded-xl text-white shadow-lg flex-shrink-0">
+              <FiHome size={22} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-800">ຈັດການຫ້ອງປະຊຸມ</h1>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="bg-emerald-50 text-emerald-600 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border border-emerald-100 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                  Total: {rooms.length} Rooms
-                </span>
-              </div>
+              <h1 className="text-xl font-bold text-slate-800 tracking-tight">ຈັດການຫ້ອງປະຊຸມ</h1>
+              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">ຈຳນວນທັງໝົດ: {rooms.length}</p>
             </div>
           </div>
 
-          <div className="flex gap-3 w-full md:w-auto">
-            {/* ✅ ເພີ່ມໄອຄັອນໃນຊ່ອງຄົ້ນຫາ */}
-            <div className="relative flex-1 md:w-64">
-              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <div className="flex gap-3 w-full md:w-auto items-center">
+            <div className="relative flex-1 md:w-72">
+              <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input 
-                placeholder="ຄົ້ນຫາຫ້ອງປະຊຸມ..." 
-                className="bg-slate-50 border border-slate-200 px-6 py-3 pl-12 rounded-2xl outline-none focus:border-emerald-500 w-full font-bold text-sm transition-all"
+                placeholder="ຄົ້ນຫາຊື່ຫ້ອງ ຫຼື ສະຖານທີ່..." 
+                className="bg-slate-50 border border-slate-200 py-2.5 pl-10 pr-4 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 w-full text-sm transition-all"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <button 
               onClick={() => { setCurrentRoom(initialRoomState); setIsModalOpen(true); }}
-              className="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black flex items-center gap-2 shrink-0 shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-95"
+              className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 text-sm hover:bg-emerald-700 transition-all shadow-md active:scale-95 flex-shrink-0"
             >
-              <FiPlus size={20} strokeWidth={3} /> ເພີ່ມໃໝ່
+              <FiPlus size={18} /> ເພີ່ມໃໝ່
             </button>
           </div>
         </div>
 
-        {/* --- Table --- */}
-        <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden">
+        {/* --- Table Section: Separate Created and Updated Columns --- */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
-                <tr className="bg-slate-50/50 text-[15px] font-black uppercase text-slate-400 border-b tracking-wider">
-                  <th className="p-6">ID</th>
-                  <th className="p-6 text-center">ຮູບພາບ</th>
-                  <th className="p-6">ຊື່ຫ້ອງປະຊຸມ</th>
-                  <th className="p-6">ສະຖານທີ່</th>
-                  <th className="p-6 text-center">ຄວາມຈຸ</th>
-                  <th className="p-6 text-center">ສະຖານະ</th>
-                  <th className="p-6">ວັນທີ</th>
-                  <th className="p-6 text-right">ຈັດການ</th>
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  <th className="py-4 px-5 w-16 text-center text-[10px] font-bold uppercase text-slate-400 tracking-widest">ID</th>
+                  <th className="py-4 px-4 w-24 text-center text-[10px] font-bold uppercase text-slate-400 tracking-widest">ຮູບພາບ</th>
+                  <th className="py-4 px-5 text-[10px] font-bold uppercase text-slate-400 tracking-widest">ຊື່ຫ້ອງປະຊຸມ</th>
+                  <th className="py-4 px-5 text-[10px] font-bold uppercase text-slate-400 tracking-widest">ສະຖານທີ່</th>
+                  <th className="py-4 px-5 text-center text-[10px] font-bold uppercase text-slate-400 tracking-widest">ຄວາມຈຸ</th>
+                  <th className="py-4 px-5 text-center text-[10px] font-bold uppercase text-slate-400 tracking-widest">ສະຖານະ</th>
+                  <th className="py-4 px-5 text-[10px] font-bold uppercase text-slate-400 tracking-widest">ວັນທີສ້າງ</th>
+                  <th className="py-4 px-5 text-[10px] font-bold uppercase text-slate-400 tracking-widest text-emerald-600">ອັບເດດລ່າສຸດ</th>
+                  <th className="py-4 px-5 text-center text-[10px] font-bold uppercase text-slate-400 tracking-widest">ຈັດການ</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-50">
                 {filteredRooms.map((room) => (
-                  <tr key={room.room_id} className="hover:bg-slate-50/50 group transition-all">
-                    <td className="p-6 font-mono text-[15px] text-slate-300 font-bold">#{room.room_id}</td>
-                    <td className="p-6">
-                      <div className="w-16 h-11 bg-slate-100 rounded-xl overflow-hidden mx-auto border border-slate-200 shadow-inner relative group-hover:border-emerald-200 transition-colors">
-                        <img src={room.image_url || 'https://via.placeholder.com/150'} className="w-full h-full object-cover" alt="room" />
-                        {!room.image_url && <FiImage className="absolute inset-0 m-auto text-slate-300" />}
+                  <tr key={room.room_id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="py-3.5 px-5 text-center text-xs text-slate-400 font-mono">#{room.room_id}</td>
+                    <td className="py-3.5 px-4">
+                      <div className="w-14 h-9 bg-slate-100 rounded-lg overflow-hidden mx-auto border border-slate-200 shadow-sm flex items-center justify-center">
+                        {room.image_url ? (
+                          <img src={room.image_url} className="w-full h-full object-cover" alt="room" />
+                        ) : (
+                          <FiImage className="text-slate-300" size={16} />
+                        )}
                       </div>
                     </td>
-                    <td className="p-6 font-black text-slate-500 text-lg tracking-tight group-hover:text-emerald-600 transition-colors">{room.room_name}</td>
-                    <td className="p-6">
-                      <div className="font-bold text-slate-600 text-sm flex items-center gap-1">
-                        {/* ✅ ໄອຄັອນສະຖານທີ່ */}
-                        <FiMapPin className="text-emerald-600" size={16}/> {room.location}
+                    <td className="py-3.5 px-5 font-bold text-slate-800 text-[14px]">{room.room_name}</td>
+                    <td className="py-3.5 px-5 text-[13px] text-slate-600">
+                      <div className="flex items-center gap-1.5 font-medium">
+                        <FiMapPin className="text-slate-400" size={14}/> {room.location}
                       </div>
                     </td>
-                    <td className="p-6 text-center">
-                       <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-xl font-black text-xs flex items-center justify-center gap-1 mx-auto w-fit border border-blue-100">
-                          <FiUsers size={14}/> {room.capacity} ຄົນ
+                    <td className="py-3.5 px-5 text-center">
+                       <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg font-bold text-[11px] border border-blue-100">
+                          {room.capacity} ຄົນ
                        </span>
                     </td>
-                    <td className="p-6 text-center">
-                      <span className={`px-4 py-1.5 rounded-xl text-[13px] font-black uppercase flex items-center gap-1.5 justify-center w-fit mx-auto ${room.status === 'active' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-slate-200 text-slate-500'}`}>
-                        <FiActivity size={12} /> {room.status === 'active' ? 'ພ້ອມໃຊ້' : 'ປິດປັບປຸງ'}
+                    <td className="py-3.5 px-5 text-center">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase ${room.status === 'active' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                        {room.status === 'active' ? 'ພ້ອມໃຊ້' : 'ປິດປັບປຸງ'}
                       </span>
                     </td>
-                    <td className="p-6">
-                      <div className="flex flex-col gap-1 text-[13px] font-bold">
-                        <div className="flex items-center gap-1.5 text-slate-400"><FiCalendar size={12}/> {formatDate(room.createdAt)}</div>
-                        <div className="flex items-center gap-1.5 text-emerald-500"><FiClock size={12}/> {formatDate(room.updatedAt)}</div>
-                      </div>
+                    {/* --- ແຍກ Column ວັນທີສ້າງ --- */}
+                    <td className="py-3.5 px-5 text-[11px] text-slate-400 whitespace-nowrap">
+                      <FiCalendar className="inline mr-1" size={12}/> {formatDate(room.createdAt)}
                     </td>
-                    <td className="p-6 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                        <button onClick={() => { setCurrentRoom(room); setIsModalOpen(true); }} className="p-2.5 text-amber-500 hover:bg-amber-50 rounded-xl border border-amber-100 bg-white shadow-sm transition-all"><FiEdit2 size={16} /></button>
-                        <button onClick={() => deleteRoom(room.room_id)} className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl border border-red-100 bg-white shadow-sm transition-all"><FiTrash2 size={16} /></button>
+                    {/* --- ແຍກ Column ອັບເດດລ່າສຸດ --- */}
+                    <td className="py-3.5 px-5 text-[11px] text-emerald-600 font-semibold whitespace-nowrap bg-emerald-50/30">
+                      <FiClock className="inline mr-1" size={12}/> {formatDate(room.updatedAt)}
+                    </td>
+                    <td className="py-3.5 px-5">
+                      <div className="flex justify-center gap-2">
+                        <button 
+                          onClick={() => { setCurrentRoom(room); setIsModalOpen(true); }} 
+                          className="p-2 text-amber-500 hover:bg-amber-50 rounded-xl border border-amber-200 bg-white shadow-sm transition-all"
+                        >
+                          <FiEdit2 size={15} />
+                        </button>
+                        <button 
+                          onClick={() => deleteRoom(room.room_id)} 
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-xl border border-red-200 bg-white shadow-sm transition-all"
+                        >
+                          <FiTrash2 size={15} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -202,54 +197,54 @@ export default function RoomsPage() {
         </div>
       </div>
 
-      {/* --- Modal Form --- */}
+      {/* --- Modal (ຄືເກົ່າ) --- */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl border border-white animate-in zoom-in duration-200">
-            <h2 className="text-xl font-black text-slate-800 mb-8 uppercase tracking-tighter flex items-center gap-3">
-              <div className="bg-emerald-50 p-2 rounded-lg text-emerald-600"><FiHome /></div>
-              {currentRoom.room_id ? 'ແກ້ໄຂຂໍ້ມູນຫ້ອງ' : 'ເພີ່ມຫ້ອງປະຊຸມໃໝ່'}
-            </h2>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-5">
+              <div className="bg-emerald-100 p-2 rounded-xl text-emerald-600"><FiHome size={20}/></div>
+              <h2 className="text-xl font-bold text-slate-800 uppercase tracking-tight">
+                {currentRoom.room_id ? 'ແກ້ໄຂຫ້ອງປະຊຸມ' : 'ເພີ່ມຫ້ອງປະຊຸມໃໝ່'}
+              </h2>
+            </div>
+            
             <form onSubmit={handleSave} className="space-y-4">
-              {/* ✅ ເພີ່ມ Icons ໃນ Inputs */}
-              <div className="relative group">
-                <FiHome className="absolute left-4 top-4 text-slate-300 group-focus-within:text-emerald-600 transition-colors" />
-                <input required placeholder="ຊື່ຫ້ອງປະຊຸມ" className="w-full bg-slate-50 border border-slate-200 p-4 pl-12 rounded-2xl font-bold focus:border-emerald-500 outline-none transition-all" 
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-400 uppercase ml-1 tracking-wider">ຊື່ຫ້ອງປະຊຸມ</label>
+                <input required className="w-full bg-slate-50 border border-slate-200 py-3 px-4 rounded-xl text-sm outline-none focus:border-emerald-500 focus:bg-white transition-all font-medium" 
                   value={currentRoom.room_name} onChange={e => setCurrentRoom({...currentRoom, room_name: e.target.value})} />
               </div>
               
-              <div className="relative group">
-                <FiLayers className="absolute left-4 top-4 text-slate-300 group-focus-within:text-emerald-600 transition-colors" />
-                <input required placeholder="ສະຖານທີ່ (ຊັ້ນ/ຕຶກ)" className="w-full bg-slate-50 border border-slate-200 p-4 pl-12 rounded-2xl font-bold focus:border-emerald-500 outline-none transition-all" 
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-400 uppercase ml-1 tracking-wider">ສະຖານທີ່</label>
+                <input required className="w-full bg-slate-50 border border-slate-200 py-3 px-4 rounded-xl text-sm outline-none focus:border-emerald-500 focus:bg-white transition-all font-medium" 
                   value={currentRoom.location} onChange={e => setCurrentRoom({...currentRoom, location: e.target.value})} />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
-                <div className="relative group">
-                  <FiUsers className="absolute left-4 top-4 text-slate-300 group-focus-within:text-emerald-600 transition-colors" />
-                  <input type="number" placeholder="ຄວາມຈຸ" className="w-full bg-slate-50 border border-slate-200 p-4 pl-12 rounded-2xl font-bold focus:border-emerald-500 outline-none" 
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-400 uppercase ml-1 tracking-wider">ຄວາມຈຸ</label>
+                  <input type="number" className="w-full bg-slate-50 border border-slate-200 py-3 px-4 rounded-xl text-sm outline-none focus:border-emerald-500 focus:bg-white transition-all font-medium" 
                     value={currentRoom.capacity} onChange={e => setCurrentRoom({...currentRoom, capacity: parseInt(e.target.value)})} />
                 </div>
-                <div className="relative">
-                  <FiActivity className="absolute left-4 top-4 text-slate-300 pointer-events-none" />
-                  <select className="w-full bg-slate-50 border border-slate-200 p-4 pl-12 rounded-2xl font-bold outline-none appearance-none focus:border-emerald-500" value={currentRoom.status} onChange={e => setCurrentRoom({...currentRoom, status: e.target.value})}>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-400 uppercase ml-1 tracking-wider">ສະຖານະ</label>
+                  <select className="w-full bg-slate-50 border border-slate-200 py-3 px-4 rounded-xl text-sm outline-none appearance-none focus:border-emerald-500 focus:bg-white transition-all font-medium cursor-pointer" value={currentRoom.status} onChange={e => setCurrentRoom({...currentRoom, status: e.target.value})}>
                       <option value="active">ພ້ອມໃຊ້ງານ</option>
                       <option value="inactive">ປິດປັບປຸງ</option>
                   </select>
                 </div>
               </div>
 
-              <div className="relative group">
-                <FiImage className="absolute left-4 top-4 text-slate-300 group-focus-within:text-emerald-600 transition-colors" />
-                <input placeholder="Link ຮູບພາບຫ້ອງ (URL)" className="w-full bg-slate-50 border border-slate-200 p-4 pl-12 rounded-2xl outline-none font-bold focus:border-emerald-500" 
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-400 uppercase ml-1 tracking-wider">URL ຮູບພາບ</label>
+                <input className="w-full bg-slate-50 border border-slate-200 py-3 px-4 rounded-xl text-sm outline-none focus:border-emerald-500 focus:bg-white transition-all font-medium" 
                   value={currentRoom.image_url} onChange={e => setCurrentRoom({...currentRoom, image_url: e.target.value})} />
               </div>
 
               <div className="flex gap-4 pt-6">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-[1] bg-red-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-red-100 hover:bg-red-700 transition-all uppercase text-[15px] tracking-widest">ຍົກເລີກ</button>
-                <button type="submit" className="flex-[1] bg-emerald-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all uppercase text-[15px] tracking-widest">
-                  ບັນທຶກຂໍ້ມູນ
-                </button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-100 text-slate-600 py-3.5 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all">ຍົກເລີກ</button>
+                <button type="submit" className="flex-1 bg-emerald-600 text-white py-3.5 rounded-2xl font-bold text-sm shadow-lg hover:bg-emerald-700 transition-all">ບັນທຶກ</button>
               </div>
             </form>
           </div>
