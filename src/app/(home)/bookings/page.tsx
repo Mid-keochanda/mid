@@ -7,20 +7,34 @@ import interactionPlugin from '@fullcalendar/interaction';
 import allLocales from '@fullcalendar/core/locales-all'; 
 import { bookingService } from '@/services/authen'; 
 
-export default function BookingPage() {
+// --- 1. ເພີ່ມ Interface ເພື່ອປິດຂີດແດງ (ກຳນົດ Type ໃຫ້ຊັດເຈນ) ---
+interface CateringItem {
+  cateringItem_id: number;
+  quantity: number;
+}
+
+interface EquipmentItem {
+  equipment_id: number;
+  quantity: number;
+}
+
+export default function BookingCalendar() {
   const [events, setEvents] = useState<any[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [allEquipments, setAllEquipments] = useState<any[]>([]);
-  const [selectedEquipments, setSelectedEquipments] = useState<{equipment_id: number, quantity: number}[]>([]);
   const [allCaterings, setAllCaterings] = useState<any[]>([]);
-  const [selectedCaterings, setSelectedCaterings] = useState<{catering_item_id: number, quantity: number}[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false); 
-  const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
 
- const fetchData = useCallback(async () => {
+  // ⭐ ປະກາດ State ໂດຍໃຊ້ Interface ທີ່ສ້າງໄວ້ທາງເທິງ
+  const [selectedCaterings, setSelectedCaterings] = useState<CateringItem[]>([]);
+  const [selectedEquipments, setSelectedEquipments] = useState<EquipmentItem[]>([]);
+
+  // Fetch Data
+  const fetchData = useCallback(async () => {
     try {
       const [resB, roomsData, usersData, equipData, cateringData] = await Promise.all([
         bookingService.getAll(),
@@ -29,6 +43,7 @@ export default function BookingPage() {
         bookingService.getEquipments(),
         bookingService.getCateringItems()
       ]);
+
       const rawBookings = Array.isArray(resB.data) ? resB.data : (resB.data?.data || []);
       
       const expandedEvents: any[] = [];
@@ -78,24 +93,42 @@ export default function BookingPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const addCateringField = () => setSelectedCaterings([...selectedCaterings, { catering_item_id: 0, quantity: 1 }]);
+ // Actions for Catering
+  const addCateringField = () => setSelectedCaterings([...selectedCaterings, { cateringItem_id: 0, quantity: 1 }]);
   const removeCateringField = (index: number) => setSelectedCaterings(selectedCaterings.filter((_, i) => i !== index));
-  const updateCatering = (index: number, field: string, value: any) => {
-    const newItems = [...selectedCaterings];
-    newItems[index] = { ...newItems[index], [field]: Number(value) };
-    setSelectedCaterings(newItems);
-  };
 
+ const updateCatering = (index: number, field: string, value: any) => {
+  const newItems = [...selectedCaterings] as any[];
+  
+  // ບັງຄັບໃຫ້ທຸກ Key ທີ່ກ່ຽວກັບ ID ກາຍເປັນ cateringItem_id ທັງໝົດ
+  let finalField = field;
+  if (field === 'catering_item_id' || field === 'id' || field === 'cateringItem_id') {
+    finalField = 'cateringItem_id'; 
+  }
+  
+  const finalValue = (finalField === 'cateringItem_id' || finalField === 'quantity') 
+    ? (Number(value) || 0) 
+    : value;
+    
+  newItems[index] = { ...newItems[index], [finalField]: finalValue };
+  setSelectedCaterings(newItems);
+};
+
+  // Actions for Equipment
   const addEquipmentField = () => setSelectedEquipments([...selectedEquipments, { equipment_id: 0, quantity: 1 }]);
   const removeEquipmentField = (index: number) => setSelectedEquipments(selectedEquipments.filter((_, i) => i !== index));
+
   const updateEquipment = (index: number, field: string, value: any) => {
-    const newItems = [...selectedEquipments];
-    newItems[index] = { ...newItems[index], [field]: Number(value) };
+    const newItems = [...selectedEquipments] as any[];
+    const finalValue = (field === 'equipment_id' || field === 'quantity') 
+      ? (Number(value) || 0) 
+      : value;
+    newItems[index] = { ...newItems[index], [field]: finalValue };
     setSelectedEquipments(newItems);
   };
 
   const filteredEvents = useMemo(() => {
-    return events.filter(event => event.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    return events.filter((event: any) => event.title.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [events, searchTerm]);
 
   const handleDateSelect = (selectInfo: any) => {
@@ -115,16 +148,24 @@ export default function BookingPage() {
 
   const handleEventClick = (info: any) => {
     const data = info.event.extendedProps;
+    const realId = info.event.id?.includes('-rec-') 
+                  ? info.event.id.split('-rec-')[0] 
+                  : (info.event.id || data.booking_id || data.id);
+
     setSelectedBooking({
         ...data,
-        booking_id: info.event.id?.split('-rec-')[0] || data.booking_id || data.id
+        booking_id: realId,
+        id: realId
     });
     setIsViewModalOpen(true); 
   };
 
   const handleDelete = async () => {
     const currentId = selectedBooking?.booking_id || selectedBooking?.id;
-    if (!currentId) return;
+    if (!currentId || isNaN(Number(currentId))) {
+      alert("❌ ບໍ່ພົບ ID ຂອງການຈອງ");
+      return;
+    }
     if (window.confirm("ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລົບການຈອງນີ້?")) {
       try {
         await bookingService.delete(currentId);
@@ -138,44 +179,53 @@ export default function BookingPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+ // --- ສ່ວນທີ່ປັບປຸງໃຫ້ແກ້ໄຂອາຫານ/ອຸປະກອນໄດ້ (handleSubmit) ---
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const roleType = formData.get("user_role");
-    const targetUser = users.find(u => u.role === roleType) || users[0];
-    const isRecurring = formData.get("is_recurring") === "true";
-    const formatDT = (val: any) => (!val) ? "" : val.toString().replace('T', ' ').substring(0, 16) + ":00";
+    const currentId = selectedBooking?.booking_id || selectedBooking?.id;
 
     const payload: any = {
       title: formData.get("title") as string,
-      room_id: Number(formData.get("room_id")), 
-      user_id: targetUser?.user_id || 1, 
-      start_time: formatDT(formData.get("start_time")),
-      end_time: formatDT(formData.get("end_time")),
+      room_id: Number(formData.get("room_id")),
+      user_id: Number(selectedBooking?.user_id || 1),
+      start_time: formData.get("start_time"), 
+      end_time: formData.get("end_time"),
       attendeeCount: Number(formData.get("attendeeCount")),
-      status: formData.get("status"),
-      is_recurring: isRecurring,
-      recurring_pattern: isRecurring ? (formData.get("recurring_pattern") || "none") : "none",
-      equipments: selectedEquipments.filter(item => item.equipment_id > 0),
-      caterings: selectedCaterings.filter(item => item.catering_item_id > 0)
+      status: formData.get("status") || "Pending", 
+      is_recurring: formData.get("is_recurring") === "true" ? 1 : 0,
+      recurring_pattern: formData.get("recurring_pattern") || "none",
+      
+      equipments: selectedEquipments
+        .filter((item: any) => Number(item.equipment_id) > 0)
+        .map((i: any) => ({ 
+          equipment_id: Number(i.equipment_id), 
+          quantity: Number(i.quantity) 
+        })),
+        
+     caterings: selectedCaterings
+  .map((i: any) => ({
+    // ດຶງ ID ຈາກ Key ໃດກໍໄດ້ທີ່ມີຄ່າ
+    cateringItem_id: Number(i.cateringItem_id || i.catering_item_id || i.id),
+    quantity: Number(i.quantity)
+  }))
+  .filter((item: any) => item.cateringItem_id > 0),
     };
 
     try {
-      const currentId = selectedBooking?.booking_id || selectedBooking?.id;
-      if (currentId && isModalOpen && selectedBooking.title) {
-          await bookingService.update(currentId, payload);
-          alert("✅ ແກ້ໄຂຂໍ້ມູນສຳເລັດ!");
+      if (currentId) {
+        await bookingService.delete(currentId); 
+        await bookingService.create(payload);
+        alert("✅ ແກ້ໄຂຂໍ້ມູນສຳເລັດ!");
       } else {
-          await bookingService.create(payload);
-          alert("✅ ບັນທຶກການຈອງໃໝ່ສຳເລັດ!");
+        await bookingService.create(payload);
+        alert("✅ ບັນທຶກການຈອງໃໝ່ສຳເລັດ!");
       }
       setIsModalOpen(false);
-      setSelectedBooking(null);
-      setSelectedEquipments([]);
-      setSelectedCaterings([]);
       await fetchData(); 
     } catch (err: any) {
-      alert("❌ ຜິດພາດ: " + (err.response?.data?.message || "ເກີດຂໍ້ຜິດພາດ"));
+      console.error("Submit Error:", err);
+      alert("❌ ຜິດພາດ: " + (err.response?.data?.message || "ບໍ່ສາມາດບັນທຶກໄດ້"));
     }
   };
 
@@ -231,24 +281,24 @@ export default function BookingPage() {
       {/* 1. Modal View Detail */}
       {isViewModalOpen && selectedBooking && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[1000] p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 border dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden border dark:border-slate-800">
             <div className="bg-slate-50 dark:bg-slate-800/50 p-8 border-b dark:border-slate-800 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">ລາຍລະອຽດການຈອງ</h2>
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-white">ລາຍລະອຽດການຈອງ</h2>
               <button onClick={() => setIsViewModalOpen(false)} className="text-4xl text-slate-300 hover:text-slate-500 transition-colors">&times;</button>
             </div>
             
             <div className="p-10 space-y-6 overflow-y-auto max-h-[70vh]">
               <div className="flex flex-col md:flex-row justify-between gap-6">
                 <div className="flex-1">
-                  <p className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-2">ຫົວຂໍ້ການປະຊຸມ</p>
+                  <p className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase mb-2 tracking-widest">ຫົວຂໍ້ການປະຊຸມ</p>
                   <p className="text-3xl font-bold text-slate-800 dark:text-white leading-tight">{selectedBooking.title}</p>
                 </div>
                 <div className="shrink-0">
-                   <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">ສະຖານະ</p>
+                   <p className="text-xs font-black text-slate-400 uppercase mb-2 tracking-widest">ສະຖານະ</p>
                    <span className={`inline-block px-5 py-2 rounded-full text-sm font-black shadow-sm ${
                     selectedBooking.status === 'Approved' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 
                     selectedBooking.status === 'Rejected' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                  }`}>
+                   }`}>
                     {selectedBooking.status === 'Approved' ? 'ອະນຸມັດ' : selectedBooking.status === 'Rejected' ? 'ປະຕິເສດ' : 'ລໍຖ້າກວດສອບ'}
                   </span>
                 </div>
@@ -256,30 +306,29 @@ export default function BookingPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-6 bg-slate-50/50 dark:bg-slate-800/30 rounded-[2rem] border border-slate-100 dark:border-slate-800">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">ຫ້ອງປະຊຸມ</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase mb-1">ຫ້ອງປະຊຸມ</p>
                   <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{selectedBooking.room?.room_name || 'ບໍ່ໄດ້ລະບຸ'}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">ປະເພດຜູ້ໃຊ້</p>
+                  <p className="text-sm font-black text-slate-400 uppercase mb-1">ປະເພດຜູ້ໃຊ້</p>
                   <p className="text-lg font-bold text-slate-700 dark:text-slate-300 capitalize">{selectedBooking.user?.role === 'admin' ? 'ຜູ້ດູແລລະບົບ' : 'ຜູ້ໃຊ້ທົ່ວໄປ'}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">ຈຳນວນຄົນ</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase mb-1">ຈຳນວນຄົນ</p>
                   <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{selectedBooking.attendeeCount || 0} ຄົນ</p>
                 </div>
               </div>
 
-              {/* ແກ້ໄຂການສະແດງ Catering ໃນ View Detail */}
+              {/* Display Caterings */}
               {(selectedBooking.booking_caterings?.length > 0 || selectedBooking.caterings?.length > 0) && (
                 <div className="p-6 bg-orange-50/30 dark:bg-orange-900/10 rounded-[2rem] border border-orange-100/50 dark:border-orange-900/30">
-                   <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-3">🍽️ ອາຫານ ແລະ ເຄື່ອງດື່ມ</p>
+                   <p className="text-[10px] font-black text-orange-500 uppercase mb-3 tracking-widest">🍽️ ອາຫານ ແລະ ເຄື່ອງດື່ມ</p>
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {(selectedBooking.booking_caterings || selectedBooking.caterings).map((bc: any, idx: number) => {
-                        // ກວດສອບ ID ຈາກທັງ 2 ບ່ອນ (bc.Id ມາຈາກ backend ໂດຍກົງ ຫຼື bc.catering_item_id)
-                        const itemInfo = allCaterings.find(c => c.Id === (bc.catering_item_id || bc.catering_item?.Id || bc.Id));
+                        const itemInfo = allCaterings.find((c:any) => (c.id === bc.catering_item_id) || (c.Id === bc.catering_item_id) || (c.id === bc.cateringItem_id));
                         return (
                           <div key={idx} className="flex justify-between items-center bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                            <span className="text-sm font-bold">{itemInfo?.Name || bc.catering_item?.Name || 'ລາຍການອາຫານ'}</span>
+                            <span className="text-sm font-bold">{itemInfo?.name || itemInfo?.Name || bc.catering_item?.name || 'ລາຍການອາຫານ'}</span>
                             <span className="bg-orange-100 text-orange-600 px-2 py-1 rounded-md text-xs font-black">x{bc.quantity}</span>
                           </div>
                         );
@@ -288,13 +337,13 @@ export default function BookingPage() {
                 </div>
               )}
 
-              {/* ແກ້ໄຂການສະແດງ Equipment ໃນ View Detail */}
+              {/* Display Equipments */}
               {(selectedBooking.booking_equipments?.length > 0 || selectedBooking.equipments?.length > 0) && (
                 <div className="p-6 bg-blue-50/30 dark:bg-blue-900/10 rounded-[2rem] border border-blue-100/50 dark:border-blue-900/30">
-                   <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-3">🛠️ ອຸປະກອນທີ່ພ່ວງມາ</p>
+                   <p className="text-[10px] font-black text-blue-500 uppercase mb-3 tracking-widest">🛠️ ອຸປະກອນທີ່ພ່ວງມາ</p>
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {(selectedBooking.booking_equipments || selectedBooking.equipments).map((be: any, idx: number) => {
-                        const itemInfo = allEquipments.find(e => e.id === (be.equipment_id || be.equipment?.id || be.id));
+                        const itemInfo = allEquipments.find((e:any) => (e.id === be.equipment_id) || (e.Id === be.equipment_id));
                         return (
                           <div key={idx} className="flex justify-between items-center bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                             <span className="text-sm font-bold">{itemInfo?.item_name || be.equipment?.item_name || 'ອຸປະກອນ'}</span>
@@ -310,34 +359,27 @@ export default function BookingPage() {
                 <div className="space-y-4">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ກຳນົດເວລາ</p>
                   <div className="space-y-3">
-                    <div className="flex items-center gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <div className="flex items-center gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
                       <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span className="text-slate-500 dark:text-slate-400 text-sm">ເລີ່ມ:</span>
-                      <span className="font-bold text-slate-700 dark:text-slate-200">{selectedBooking.start_time}</span>
+                      <span className="text-slate-500 text-sm">ເລີ່ມ:</span>
+                      <span className="font-bold">{selectedBooking.start_time}</span>
                     </div>
-                    <div className="flex items-center gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <div className="flex items-center gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
                       <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                      <span className="text-slate-500 dark:text-slate-400 text-sm">ສິ້ນສຸດ:</span>
-                      <span className="font-bold text-slate-700 dark:text-slate-200">{selectedBooking.end_time}</span>
+                      <span className="text-slate-500 text-sm">ສິ້ນສຸດ:</span>
+                      <span className="font-bold">{selectedBooking.end_time}</span>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-4">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ການຈອງແບບຊ້ຳ</p>
-                  <div className={`h-full p-6 rounded-2xl border flex flex-col justify-center ${ (selectedBooking.is_recurring == 1 || selectedBooking.is_recurring === true) ? 'bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-900/30' : 'bg-slate-50 dark:bg-slate-800/30 border-slate-100 dark:border-slate-800'}`}>
+                  <div className={`h-full p-6 rounded-2xl border flex flex-col justify-center ${ (selectedBooking.is_recurring == 1 || selectedBooking.is_recurring === true) ? 'bg-orange-50 dark:bg-orange-900/10 border-orange-200' : 'bg-slate-50 dark:bg-slate-800/30'}`}>
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{(selectedBooking.is_recurring == 1 || selectedBooking.is_recurring === true) ? '🔁' : '🔘'}</span>
                       <div>
-                        <p className="text-lg font-bold text-slate-700 dark:text-slate-200">
-                          {(selectedBooking.is_recurring == 1 || selectedBooking.is_recurring === true) ? 'ມີການຈອງແບບຊ້ຳ' : 'ບໍ່ມີການຈອງແບບຊ້ຳ'}
-                        </p>
+                        <p className="text-lg font-bold">{(selectedBooking.is_recurring == 1 || selectedBooking.is_recurring === true) ? 'ມີການຈອງແບບຊ້ຳ' : 'ບໍ່ມີການຈອງແບບຊ້ຳ'}</p>
                         {(selectedBooking.is_recurring == 1 || selectedBooking.is_recurring === true) && (
-                          <p className="text-orange-600 dark:text-orange-400 font-black">
-                            { (selectedBooking.recurring_pattern || selectedBooking.recur_pattern)?.toLowerCase() === 'daily' ? '📅 ປະຈຳວັນ' :
-                              (selectedBooking.recurring_pattern || selectedBooking.recur_pattern)?.toLowerCase() === 'weekly' ? '📅 ປະຈຳອາທິດ' :
-                              (selectedBooking.recurring_pattern || selectedBooking.recur_pattern)?.toLowerCase() === 'monthly' ? '📅 ປະຈຳເດືອນ' : 
-                              `📅 ${selectedBooking.recurring_pattern || 'ບໍ່ລະບຸ'}`}
-                          </p>
+                          <p className="text-orange-600 font-black capitalize">{(selectedBooking.recurring_pattern || selectedBooking.recur_pattern)}</p>
                         )}
                       </div>
                     </div>
@@ -347,31 +389,31 @@ export default function BookingPage() {
 
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <button 
-                  onClick={() => { 
-                    setIsViewModalOpen(false); 
+                  onClick={() => {
                     const bookingEquips = selectedBooking.booking_equipments || selectedBooking.equipments || [];
+                    const mappedEquips = bookingEquips.map((be: any) => ({
+                        equipment_id: Number(be.equipment_id || be.id),
+                        quantity: Number(be.quantity)
+                    }));
                     const bookingCats = selectedBooking.booking_caterings || selectedBooking.caterings || [];
-                    
-                    setSelectedEquipments(bookingEquips.map((be: any) => ({
-                        equipment_id: be.equipment_id || be.equipment?.id || be.id,
-                        quantity: be.quantity
-                    })));
-                    
-                    setSelectedCaterings(bookingCats.map((bc: any) => ({
-                        catering_item_id: bc.catering_item_id || bc.catering_item?.Id || bc.Id,
-                        quantity: bc.quantity
-                    })));
-
-                    setIsModalOpen(true); 
-                    setSelectedBooking({
+                    const mappedCats = bookingCats.map((bc: any) => ({
+                        cateringItem_id: Number(bc.catering_item_id || bc.cateringItem_id || bc.id),
+                        quantity: Number(bc.quantity)
+                    }));
+                    const formattedBooking = {
                         ...selectedBooking,
-                        start_time: selectedBooking.start_time?.replace(' ', 'T').substring(0, 16),
-                        end_time: selectedBooking.end_time?.replace(' ', 'T').substring(0, 16)
-                    });
+                        start_time: selectedBooking.start_time ? selectedBooking.start_time.replace(' ', 'T').substring(0, 16) : "",
+                        end_time: selectedBooking.end_time ? selectedBooking.end_time.replace(' ', 'T').substring(0, 16) : ""
+                    };
+                    setSelectedEquipments(mappedEquips);
+                    setSelectedCaterings(mappedCats);
+                    setSelectedBooking(formattedBooking);
+                    setIsViewModalOpen(false);
+                    setIsModalOpen(true);
                   }}
-                  className="flex-[2] bg-blue-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-blue-700 shadow-lg shadow-blue-200 dark:shadow-none transition-all active:scale-[0.98]"
+                  className="flex-[2] bg-blue-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-blue-700 transition-all shadow-lg active:scale-95"
                 > ແກ້ໄຂຂໍ້ມູນ </button>
-                <button onClick={handleDelete} className="flex-[2] bg-red-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-red-700 shadow-lg shadow-red-200 dark:shadow-none transition-all active:scale-[0.98]"> ລົບ </button>
+                <button onClick={handleDelete} className="flex-[2] bg-red-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-red-700 transition-all shadow-lg active:scale-95"> ລົບ </button>
               </div>
             </div>
           </div>
@@ -401,7 +443,7 @@ export default function BookingPage() {
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-slate-400 uppercase ml-1">ເລືອກຫ້ອງ</label>
                       <select name="room_id" defaultValue={selectedBooking?.room_id || ""} className="w-full bg-slate-100 dark:bg-slate-800 p-4 rounded-2xl outline-none text-sm dark:text-white border dark:border-slate-700" required>
-                        <option value="">-- ເລືອກຫ້ອງ --</option>
+                        <option value="">-- ເເລືອກຫ້ອງ --</option>
                         {rooms.map((r: any) => ( <option key={r.id} value={r.id}>{r.room_name}</option> ))}
                       </select>
                     </div>
@@ -440,24 +482,24 @@ export default function BookingPage() {
                 </div>
 
                 <div className="space-y-6">
-                  {/* Catering Form Section */}
+                  {/* Catering Form */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-xs font-bold text-slate-400 uppercase ml-1">🍽️ ສັ່ງອາຫານ/ເຄື່ອງດື່ມ</label>
-                      <button type="button" onClick={addCateringField} className="text-xs bg-orange-100 text-orange-600 px-3 py-1 rounded-full font-bold hover:bg-orange-200 transition-colors">+ ເພີ່ມ</button>
+                      <button type="button" onClick={addCateringField} className="text-xs bg-orange-100 text-orange-600 px-3 py-1 rounded-full font-bold hover:bg-orange-200">+ ເພີ່ມ</button>
                     </div>
-                    <div className="max-h-32 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                      {selectedCaterings.map((item, index) => (
-                        <div key={index} className="flex gap-2 animate-in slide-in-from-right-2 duration-200">
+                    <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
+                      {selectedCaterings.map((item: any, index: number) => (
+                        <div key={index} className="flex gap-2">
                           <select 
-                            value={item.catering_item_id} 
-                            onChange={(e) => updateCatering(index, 'catering_item_id', e.target.value)}
+                            value={item.cateringItem_id} 
+                            onChange={(e) => updateCatering(index, 'cateringItem_id', e.target.value)}
                             className="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl outline-none text-sm dark:text-white border dark:border-slate-700"
                           >
                             <option value="0">ເລືອກລາຍການ</option>
                             {allCaterings.map((cat: any) => (
-                              <option key={cat.Id} value={cat.Id}>
-                                {cat.Name} ({cat.price} ກີບ)
+                              <option key={cat.id || cat.Id} value={cat.id || cat.Id}>
+                                {cat.Name || cat.name} ({cat.price} ກີບ)
                               </option>
                             ))}
                           </select>
@@ -468,18 +510,22 @@ export default function BookingPage() {
                     </div>
                   </div>
 
-                  {/* Equipments Form Section */}
+                  {/* Equipment Form */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-xs font-bold text-slate-400 uppercase ml-1">🛠️ ອຸປະກອນເສີມ</label>
-                      <button type="button" onClick={addEquipmentField} className="text-xs bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-bold hover:bg-blue-200 transition-colors">+ ເພີ່ມ</button>
+                      <button type="button" onClick={addEquipmentField} className="text-xs bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-bold hover:bg-blue-200">+ ເພີ່ມ</button>
                     </div>
-                    <div className="max-h-32 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                      {selectedEquipments.map((item, index) => (
-                        <div key={index} className="flex gap-2 animate-in slide-in-from-right-2 duration-200">
-                          <select value={item.equipment_id} onChange={(e) => updateEquipment(index, 'equipment_id', e.target.value)} className="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl outline-none text-sm dark:text-white border dark:border-slate-700">
+                    <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
+                      {selectedEquipments.map((item: any, index: number) => (
+                        <div key={index} className="flex gap-2">
+                          <select 
+                            value={item.equipment_id} 
+                            onChange={(e) => updateEquipment(index, 'equipment_id', e.target.value)} 
+                            className="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl outline-none text-sm dark:text-white border dark:border-slate-700"
+                          >
                             <option value="0">ເລືອກອຸປະກອນ</option>
-                            {allEquipments.map((eq: any) => ( <option key={eq.id} value={eq.id}>{eq.item_name}</option> ))}
+                            {allEquipments.map((eq: any) => ( <option key={eq.id || eq.Id} value={eq.id || eq.Id}>{eq.item_name || eq.name}</option> ))}
                           </select>
                           <input type="number" min="1" value={item.quantity} onChange={(e) => updateEquipment(index, 'quantity', e.target.value)} className="w-16 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl outline-none text-center text-sm dark:text-white border dark:border-slate-700" />
                           <button type="button" onClick={() => removeEquipmentField(index)} className="text-red-500 px-2 font-bold text-xl hover:scale-125 transition-transform">&times;</button>
@@ -488,7 +534,6 @@ export default function BookingPage() {
                     </div>
                   </div>
 
-                  {/* Recurring Form Section */}
                   <div className="bg-blue-50/50 dark:bg-blue-900/10 p-5 rounded-[1.5rem] border border-blue-100 dark:border-blue-900/30 space-y-3">
                     <div className="flex items-center gap-3">
                       <input type="checkbox" name="is_recurring" value="true" defaultChecked={selectedBooking?.is_recurring == 1 || selectedBooking?.is_recurring === true} className="w-5 h-5 accent-blue-600 cursor-pointer" id="recur-check" />
@@ -505,7 +550,7 @@ export default function BookingPage() {
               </div>
 
               <div className="mt-8">
-                <button type="submit" className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-blue-700 shadow-xl shadow-blue-200 dark:shadow-none transition-all active:scale-[0.98]">
+                <button type="submit" className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-blue-700 shadow-xl transition-all active:scale-95">
                   ຢືນຢັນການບັນທຶກ
                 </button>
               </div>
