@@ -83,8 +83,9 @@ export default function RoomsPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-3 md:p-5 font-sans text-slate-900 text-[13px]">
       <Toaster position="top-right" />
-      
+
       <div className="max-w-full mx-auto space-y-2">
+        
         {/* --- Header --- */}
         <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-green-300 flex flex-col md:flex-row justify-between items-center gap-2">
           <div className="flex items-center gap-2">
@@ -157,12 +158,14 @@ export default function RoomsPage() {
                         {room.status === 'active' ? 'ພ້ອມ' : 'ປິດ'}
                       </span>
                     </td>
-                    <td className="py-1.5 px-3 text-[10px] text-slate-400 whitespace-nowrap"><FiCalendar className="inline mr-1" size={9}/> {formatDate(room.createdAt)}</td>
-                    <td className="py-1.5 px-3 text-[10px] text-emerald-600 font-bold whitespace-nowrap bg-emerald-50/30"><FiClock className="inline mr-1" size={9}/> {formatDate(room.updatedAt)}</td>
+                    <td className="py-1.5 px-3 text-[11px] text-slate-400 whitespace-nowrap">
+                      <FiCalendar className="inline mr-1" size={9}/> {formatDate(room.createdAt)}</td>
+                    <td className="text-[11px] text-emerald-500 font-semibold flex items-center gap-1.5 whitespace-nowrap bg-emerald-50/50 px-3 py-1.5 rounded-lg border border-emerald-100 w-fit">
+                      <FiClock className="inline mr-1" size={9}/> {formatDate(room.updatedAt)}</td>
                     <td className="py-1.5 px-3">
                       <div className="flex justify-center gap-1">
-                        <button onClick={() => { setCurrentRoom(room); setIsModalOpen(true); }} className="p-1 text-amber-500 hover:bg-amber-50 rounded border border-amber-100 bg-white shadow-sm transition-all"><FiEdit2 size={11} /></button>
-                        <button onClick={() => handleDelete(room.room_id)} className="p-1 text-red-500 hover:bg-red-50 rounded border border-red-100 bg-white shadow-sm transition-all"><FiTrash2 size={11} /></button>
+                        <button onClick={() => { setCurrentRoom(room); setIsModalOpen(true); }} className="p-1 text-amber-500 hover:bg-amber-50 rounded border border-transparent hover:border-amber-100 transition-all"><FiEdit2 size={11} /></button>
+                        <button onClick={() => handleDelete(room.room_id)} className="p-1 text-red-400 hover:bg-red-50 rounded border border-transparent hover:border-red-100 transition-all"><FiTrash2 size={11} /></button>
                       </div>
                     </td>
                   </tr>

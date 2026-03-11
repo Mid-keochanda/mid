@@ -87,7 +87,8 @@ export default function UsersPage() {
     <div className="min-h-screen bg-[#F8FAFC] p-3 md:p-5 font-sans text-slate-900 text-[13px]">
       <Toaster position="top-right" />
       
-      <div className="max-w-7xl mx-auto space-y-3">
+      <div className="max-w-full mx-auto space-y-2">
+        
         {/* Header Section */}
         <div className="bg-white px-4 py-2.5 rounded-xl shadow-sm border border-red-200 flex flex-col md:flex-row justify-between items-center gap-3">
           <div className="flex items-center gap-2.5">

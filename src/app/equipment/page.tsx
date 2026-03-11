@@ -79,15 +79,16 @@ export default function EquipmentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 font-sans antialiased text-slate-700">
+     <div className="min-h-screen bg-[#F8FAFC] p-3 md:p-5 font-sans text-slate-900 text-[13px]">
       <Toaster position="top-right" />
-      <div className="max-w-7xl mx-auto space-y-6">
+      
+      <div className="max-w-full mx-auto space-y-2">
         
         {/* Header Section */}
-        <div className="bg-white px-6 py-4 rounded-xl shadow-sm border border-blue-300 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-900 p-2.5 rounded-lg text-white shadow-md">
-              <FiBox size={22} />
+        <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-blue-300 flex flex-col md:flex-row justify-between items-center gap-2">
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-600 p-1.5 rounded-lg text-white shadow-md">
+              <FiBox size={16} />
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900">ຈັດການພັດສະດຸ</h1>
@@ -139,16 +140,16 @@ export default function EquipmentPage() {
                       <td className="py-1 px-5 text-center font-mono text-slate-400 text-xs">#{item.id}</td>
                       <td className="py-1 px-3 font-semibold text-slate-700 text-sm">{item.item_name}</td>
                       <td className="py-1 px-3 text-center">
-                        <span className="inline-block min-w-[20px] py-1 px-2 rounded-lg font-bold text-[13px] text-blue-600 bg-blue-50/50 border border-blue-100">
+                        <span className="inline-block min-w-[20px] py-1 px-2 rounded-lg font-bold text-[12px] text-blue-500 bg-blue-50/50 border border-blue-90">
                           {item.total_quantity}
                         </span>
                       </td>
                       <td className="py-1 px-3 text-center font-medium text-slate-500 text-sm">{item.unit}</td>
                       <td className="py-1 px-3 text-center">
-                        <div className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-[11px] font-bold border uppercase ${
+                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border uppercase ${
                           item.item_type === 'consumable' 
-                          ? 'bg-emerald-60 border-emerald-300 text-emerald-700' 
-                          : 'bg-slate-60 border-slate-300 text-slate-700'
+                          ? 'bg-emerald-50 border-emerald-100 text-emerald-600' 
+                          : 'bg-slate-50 border-slate-100 text-slate-600'
                         }`}>
                           {item.item_type === 'consumable' ? <FiCheckCircle size={13}/> : <FiXCircle size={13}/>}
                           {item.item_type === 'consumable' ? 'ເອົາ' : 'ບໍ່ເອົາ'}

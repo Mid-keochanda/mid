@@ -1,6 +1,6 @@
 import axiosClient from '@/lib/axiosClient';
 
-// ໃຊ້ /rooms ຕາມທີ່ມຶງຂຽນໄວ້ຕອນທຳອິດເລີຍ ຮັບຮອງບໍ່ 404!
+
 const API_PATH = '/rooms'; 
 
 export const getAllRooms = async () => {
