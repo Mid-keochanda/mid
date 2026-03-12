@@ -110,7 +110,7 @@ export default function EquipmentPage() {
             </div>
             <button 
               onClick={() => { setFormData(initialForm); setIsModalOpen(true); }}
-              className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-slate-200 whitespace-nowrap"
+              className="bg-blue-900 hover:bg-blue-800 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-slate-200 whitespace-nowrap"
             >
               <FiPlus size={18} /> ເພີ່ມໃໝ່
             </button>
@@ -123,22 +123,22 @@ export default function EquipmentPage() {
             <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
                 <tr className="bg-blue-50/80 text-[15px] font-bold uppercase text-blue-500 border-b border-blue-200">
-                  <th className="py-2 px-6 text-center w-24">ID</th>
-                  <th className="py-2 px-4">ລາຍການອຸປະກອນ</th>
-                  <th className="py-2 px-4 text-center">ຈຳນວນ</th>
-                  <th className="py-2 px-4 text-center">ຫົວໜ່ວຍ</th>
-                  <th className="py-2 px-4 text-center">ສະຖານະ</th>
-                  <th className="py-2 px-4">ວັນທີບັນທຶກ</th>
-                  <th className="py-2 px-4">ອັບເດດລ່າສຸດ</th>
-                  <th className="py-2 px-6 text-center">ຈັດການ</th>
+                  <th className="py-1 px-5 text-center w-24">ID</th>
+                  <th className="py-1 px-2">ລາຍການອຸປະກອນ</th>
+                  <th className="py-1 px-2 text-center">ຈຳນວນ</th>
+                  <th className="py-1 px-2 text-center">ຫົວໜ່ວຍ</th>
+                  <th className="py-1 px-2 text-center">ສະຖານະ</th>
+                  <th className="py-1 px-2">ວັນທີບັນທຶກ</th>
+                  <th className="py-1 px-2">ອັບເດດລ່າສຸດ</th>
+                  <th className="py-1 px-5 text-center">ຈັດການ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredItems.length > 0 ? (
                   filteredItems.map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50/50 transition-all">
-                      <td className="py-1 px-5 text-center font-mono text-slate-400 text-xs">#{item.id}</td>
-                      <td className="py-1 px-3 font-semibold text-slate-700 text-sm">{item.item_name}</td>
+                      <td className="py-1 px-3 text-center font-mono text-slate-400 text-xs">#{item.id}</td>
+                      <td className="py-1 px-3 font-bold text-slate-700 text-sm">{item.item_name}</td>
                       <td className="py-1 px-3 text-center">
                         <span className="inline-block min-w-[20px] py-1 px-2 rounded-lg font-bold text-[12px] text-blue-500 bg-blue-50/50 border border-blue-90">
                           {item.total_quantity}
@@ -148,7 +148,7 @@ export default function EquipmentPage() {
                       <td className="py-1 px-3 text-center">
                         <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border uppercase ${
                           item.item_type === 'consumable' 
-                          ? 'bg-emerald-50 border-emerald-100 text-emerald-600' 
+                          ? 'bg-blue-50 border-blue-100 text-blue-600' 
                           : 'bg-slate-50 border-slate-100 text-slate-600'
                         }`}>
                           {item.item_type === 'consumable' ? <FiCheckCircle size={13}/> : <FiXCircle size={13}/>}
@@ -156,12 +156,12 @@ export default function EquipmentPage() {
                         </div>
                       </td>
                       <td className="py-1 px-3">
-                        <div className="text-[11px] text-slate-600 flex items-center gap-1.5 whitespace-nowrap">
+                        <div className="text-[10px] text-slate-600 font-bold flex items-center gap-1.5 whitespace-nowrap">
                           <FiCalendar className="text-slate-400" size={14}/> {formatDateTime(item.createdAt)}
                         </div>
                       </td>
                       <td className="py-1 px-3">
-                        <div className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1.5 whitespace-nowrap bg-emerald-50/50 px-3 py-1.5 rounded-lg border border-emerald-100 w-fit">
+                        <div className="text-[10px] text-blue-600 font-bold flex items-center gap-1.5 whitespace-nowrap bg-blue-50/50 px-3 py-1.5 rounded-lg border border-blue-100 w-fit">
                           <FiClock size={14}/> {formatDateTime(item.updatedAt)}
                         </div>
                       </td>
@@ -171,13 +171,13 @@ export default function EquipmentPage() {
                             onClick={() => { setFormData({...item}); setIsModalOpen(true); }} 
                             className="p-1 text-amber-500 hover:bg-amber-50 rounded border border-amber-100 bg-white shadow-sm transition-all"
                           >
-                            <FiEdit2 size={16}/>
+                            <FiEdit2 size={13}/>
                           </button>
                           <button 
                             onClick={async () => { if(confirm('ຢືນຢັນການລຶບ?')) { await equipmentService.delete(item.id); fetchItems(); } }} 
                             className="p-1 text-red-500 hover:bg-red-50 rounded border border-red-100 bg-white shadow-sm transition-all"
                           >
-                            <FiTrash2 size={16}/>
+                            <FiTrash2 size={13}/>
                           </button>
                         </div>
                       </td>
@@ -232,8 +232,8 @@ export default function EquipmentPage() {
                     value={formData.item_type}
                     onChange={e => setFormData({...formData, item_type: e.target.value})}
                   >
-                    <option value="consumable">ເອົາ (Consumable)</option>
-                    <option value="Electronic">ບໍ່ເອົາ (Fixed Asset/Electronic)</option>
+                    <option value="consumable">ເອົາ </option>
+                    <option value="Electronic">ບໍ່ເອົາ </option>
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-40">
                     <FiBox size={14}/>
@@ -243,7 +243,7 @@ export default function EquipmentPage() {
 
               <div className="flex gap-3 pt-6">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold uppercase text-[12px] hover:bg-slate-200 transition-all">ຍົກເລີກ</button>
-                <button type="submit" className="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold uppercase text-[12px] shadow-lg shadow-slate-200 active:scale-95 transition-all">ບັນທຶກຂໍ້ມູນ</button>
+                <button type="submit" className="flex-1 bg-blue-900 text-white py-3 rounded-xl font-bold uppercase text-[12px] shadow-lg shadow-blue-200 active:scale-95 transition-all">ບັນທຶກຂໍ້ມູນ</button>
               </div>
             </form>
           </div>

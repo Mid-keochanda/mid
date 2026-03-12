@@ -92,7 +92,7 @@ export default function UsersPage() {
         {/* Header Section */}
         <div className="bg-white px-4 py-2.5 rounded-xl shadow-sm border border-red-200 flex flex-col md:flex-row justify-between items-center gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="bg-blue-600 p-1.5 rounded-lg text-white">
+            <div className="bg-red-600 p-1.5 rounded-lg text-white">
               <FiUsers size={16} />
             </div>
             <div>
@@ -106,14 +106,14 @@ export default function UsersPage() {
               <FiSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
               <input 
                 placeholder="ຄົ້ນຫາ..." 
-                className="bg-red-50 border border-red-200 py-1.5 pl-8 pr-3 rounded-lg outline-none focus:ring-1 focus:ring-blue-500 w-full text-[13px] transition-all"
+                className="bg-red-50 border border-red-200 py-1.5 pl-8 pr-3 rounded-lg outline-none focus:ring-1 focus:ring-red-500 w-full text-[13px] transition-all"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <button 
               onClick={() => { setCurrentUser(initialUserState); setIsModalOpen(true); }}
-              className="bg-blue-600 text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 text-[13px] hover:bg-blue-700 transition-all shadow-sm"
+              className="bg-red-600 text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 text-[13px] hover:bg-red-700 transition-all shadow-sm"
             >
               <FiUserPlus size={14}/> ເພີ່ມ
             </button>
@@ -126,7 +126,7 @@ export default function UsersPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-red-60/80 text-[15px] font-bold uppercase text-red-500 border-b border-red-100">
-                  <th className="py-2 px-3">#</th>
+                  <th className="py-2 px-3">ID</th>
                   <th className="py-2 px-3">ຊື່ພະນັກງານ</th>
                   <th className="py-2 px-3">ອີເມວ</th>
                   <th className="py-2 px-3">ພະແນກ</th>
@@ -139,11 +139,11 @@ export default function UsersPage() {
               <tbody className="divide-y divide-slate-50">
                 {filteredUsers.map((user, idx) => (
                   <tr key={user.user_id} className="hover:bg-blue-50/30 transition-colors">
-                    <td className="py-2 px-3 text-center text-[11px] text-slate-400 font-mono">{idx + 1}</td>
-                    <td className="py-2 px-3 font-semibold text-slate-700">{user.full_name}</td>
-                    <td className="py-2 px-3 text-blue-600/70">{user.email}</td>
+                    <td className="py-2 px-3 text-center text-[12px] text-slate-400 font-mono">#{idx + 1}</td>
+                    <td className="py-2 px-3 font-bold text-slate-700">{user.full_name}</td>
+                    <td className="py-2 px-3 font-bold text-slate-600/100">{user.email}</td>
                     <td className="py-2 px-3">
-                       <span className="flex items-center gap-1 text-slate-500">
+                       <span className="flex items-center font-bold gap-1 text-slate-600">
                          <FiBriefcase size={11} className="opacity-50" />
                          {user.department || '---'}
                        </span>
@@ -155,7 +155,7 @@ export default function UsersPage() {
                     </td>
                     {/* ວັນທີບັນທຶກ */}
                     <td className="py-2 px-3">
-                      <span className="text-slate-400 text-[10px] flex items-center gap-1">
+                      <span className="text-slate-500 text-[10px] font-bold flex items-center gap-1">
                         <FiCalendar size={10} className="text-blue-400/60" /> 
                         {formatDate(user.createdAt || user.created_at)}
                       </span>
@@ -163,7 +163,7 @@ export default function UsersPage() {
                     {/* ວັນທີອັບເດດ */}
                     <td className="py-2 px-3">
                       {(user.updatedAt || user.updated_at) ? (
-                        <span className="text-indigo-400/80 text-[10px] flex items-center gap-1 font-medium">
+                        <span className="text-red-400/80 text-[10px] font-bold flex items-center gap-1">
                           <FiClock size={10} /> 
                           {formatDate(user.updatedAt || user.updated_at)}
                         </span>
@@ -194,18 +194,18 @@ export default function UsersPage() {
         <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-[1px] flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl w-full max-w-sm p-5 shadow-xl border border-slate-100">
             <h2 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <div className="bg-blue-50 p-1 rounded text-blue-600"><FiUserPlus size={16}/></div>
+              <div className="bg-red-50 p-1 rounded text-red-600"><FiUserPlus size={16}/></div>
               {currentUser.user_id ? 'ແກ້ໄຂຂໍ້ມູນ' : 'ເພີ່ມພະນັກງານ'}
             </h2>
             <form onSubmit={handleSave} className="space-y-2.5">
-              <input required placeholder="ຊື່ ແລະ ນາມສະກຸນ" className="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg outline-none focus:border-blue-400 text-[13px]" 
+              <input required placeholder="ຊື່ ແລະ ນາມສະກຸນ" className="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg outline-none focus:border-red-400 text-[13px]" 
                 value={currentUser.full_name || ''} onChange={e => setCurrentUser({...currentUser, full_name: e.target.value})} />
               
-              <input type="email" required placeholder="ອີເມວ" className="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg outline-none focus:border-blue-400 text-[13px]" 
+              <input type="email" required placeholder="ອີເມວ" className="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg outline-none focus:border-red-400 text-[13px]" 
                 value={currentUser.email || ''} onChange={e => setCurrentUser({...currentUser, email: e.target.value})} />
 
               {!currentUser.user_id && (
-                <input type="password" required placeholder="ລະຫັດຜ່ານ" className="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg outline-none focus:border-blue-400 text-[13px]" 
+                <input type="password" required placeholder="ລະຫັດຜ່ານ" className="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg outline-none focus:border-red-400 text-[13px]" 
                   value={currentUser.password || ''} onChange={e => setCurrentUser({...currentUser, password: e.target.value})} />
               )}
               
@@ -219,14 +219,14 @@ export default function UsersPage() {
                 </div>
                 <div className="space-y-0.5">
                   <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">ພະແນກ</label>
-                  <input placeholder="ພະແນກ" className="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg outline-none focus:border-blue-400 text-[13px]" 
+                  <input placeholder="ພະແນກ" className="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg outline-none focus:border-red-400 text-[13px]" 
                     value={currentUser.department || ''} onChange={e => setCurrentUser({...currentUser, department: e.target.value})} />
                 </div>
               </div>
 
               <div className="flex gap-2 pt-3">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-100 text-slate-500 py-2 rounded-lg font-bold hover:bg-slate-200">ຍົກເລີກ</button>
-                <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-bold shadow-sm hover:bg-blue-700">ບັນທຶກ</button>
+                <button type="submit" className="flex-1 bg-red-600 text-white py-2 rounded-lg font-bold shadow-sm hover:bg-red-700">ບັນທຶກ</button>
               </div>
             </form>
           </div>

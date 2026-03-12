@@ -5,7 +5,7 @@ import {
   FiCalendar, FiClock, FiPlus, FiEdit2, FiTrash2, 
   FiMapPin, FiHome, FiSearch, FiImage, FiX 
 } from 'react-icons/fi';
-import { getAllRooms, insertRoom, updateRoom, deleteRoomApi } from '@/services/rooms';
+import { getAllRooms, insertRoom, updateRoom, deleteRoom } from '@/services/rooms';
 
 export default function RoomsPage() {
   const [rooms, setRooms] = useState<any[]>([]);
@@ -60,7 +60,7 @@ export default function RoomsPage() {
   const handleDelete = async (id: any) => {
     if(confirm("ຢືນຢັນການລົບ?")) {
       try {
-        await deleteRoomApi(id);
+        await deleteRoom(id);
         toast.success("ລົບສຳເລັດ");
         fetchRooms();
       } catch (error) {
@@ -135,9 +135,9 @@ export default function RoomsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filteredRooms.map((room) => (
+                {filteredRooms.map((room, id) => (
                   <tr key={room.room_id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="py-1.5 px-3 text-center text-[10px] text-slate-400 font-mono">#{room.room_id}</td>
+                    <td className="py-1.5 px-3 text-center text-[10px] text-slate-400 font-mono">#{id + 1}</td>
                     <td className="py-1.5 px-2">
                       <div 
                         onClick={() => room.image_url && setPreviewImage(room.image_url)}
@@ -147,25 +147,27 @@ export default function RoomsPage() {
                       </div>
                     </td>
                     <td className="py-1.5 px-3 font-bold text-slate-800 text-[12px]">{room.room_name}</td>
-                    <td className="py-1.5 px-3 text-[11px] text-slate-600 font-medium">
+                    <td className="py-1.5 px-3 text-[11px] text-slate-600 font-bold">
                       <div className="flex items-center gap-1">
                         <FiMapPin className="text-slate-400" size={10}/> {room.location}
                       </div>
                     </td>
-                    <td className="py-1.5 px-2 text-center font-bold text-[11px] text-blue-600">{room.capacity} ຄົນ</td>
+                    <td className="py-1.5 px-2 text-center font-bold text-[11px] text-green-600">{room.capacity} ຄົນ</td>
                     <td className="py-1.5 px-2 text-center">
                       <span className={`px-1.5 py-0.5 rounded text-[10px] font-black uppercase ${room.status === 'active' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
                         {room.status === 'active' ? 'ພ້ອມ' : 'ປິດ'}
                       </span>
                     </td>
-                    <td className="py-1.5 px-3 text-[11px] text-slate-400 whitespace-nowrap">
+                    <td className="py-1.5 px-3 text-[10px] text-slate-600 font-bold whitespace-nowrap">
                       <FiCalendar className="inline mr-1" size={9}/> {formatDate(room.createdAt)}</td>
-                    <td className="text-[11px] text-emerald-500 font-semibold flex items-center gap-1.5 whitespace-nowrap bg-emerald-50/50 px-3 py-1.5 rounded-lg border border-emerald-100 w-fit">
+                    <td className="text-[10px] text-emerald-500 font-bold flex items-center gap-1.5 whitespace-nowrap bg-emerald-50/50 px-3 py-1.5 rounded-lg border border-emerald-100 w-fit">
                       <FiClock className="inline mr-1" size={9}/> {formatDate(room.updatedAt)}</td>
                     <td className="py-1.5 px-3">
-                      <div className="flex justify-center gap-1">
-                        <button onClick={() => { setCurrentRoom(room); setIsModalOpen(true); }} className="p-1 text-amber-500 hover:bg-amber-50 rounded border border-transparent hover:border-amber-100 transition-all"><FiEdit2 size={11} /></button>
-                        <button onClick={() => handleDelete(room.room_id)} className="p-1 text-red-400 hover:bg-red-50 rounded border border-transparent hover:border-red-100 transition-all"><FiTrash2 size={11} /></button>
+                      <div className="flex justify-center gap-2">
+                        <button onClick={() => { setCurrentRoom(room); setIsModalOpen(true); }} className="p-1 text-amber-500 hover:bg-amber-50 rounded border border-transparent hover:border-amber-100 transition-all">
+                          <FiEdit2 size={13} /></button>
+                        <button onClick={() => handleDelete(room.room_id)} className="p-1 text-red-400 hover:bg-red-50 rounded border border-transparent hover:border-red-100 transition-all">
+                          <FiTrash2 size={13} /></button>
                       </div>
                     </td>
                   </tr>
