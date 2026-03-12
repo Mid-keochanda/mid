@@ -1,7 +1,7 @@
 import axiosClient from '@/lib/axiosClient';
 
-// ກຳນົດ Path ຫຼັກ
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+// ກຳນົດ Path ຫຼັກ - ກວດເບິ່ງ IP ໃຫ້ດີເດີວ່າ .181 ຫຼື .175
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://172.18.9.181:5000/api";
 const PATH = '/equipment';
 
 export const equipmentService = {
@@ -9,47 +9,19 @@ export const equipmentService = {
   getAll: async () => {
     try {
       const response = await axiosClient.get(`${API_URL}${PATH}`);
-      
-      // ກວດສອບໂຄງສ້າງຂໍ້ມູນ (ຮອງຮັບທັງ Array ກົງໆ ຫຼື { data: [] })
-      const rawData = Array.isArray(response.data) 
-        ? response.data 
-        : (response.data.data || []);
-      
-      // Mapping ຂໍ້ມູນໃຫ້ເປັນ Standard format
-      return rawData.map((item: any) => ({
-        ...item,
-        id: item.id || item.equipment_id,
-        Name: item.Name || item.item_name || "ບໍ່ລະບຸຊື່",
-        Unit: item.Unit || item.unit || "-",
-        isActive: item.isActive === true || item.isActive === 1 || item.is_active === 1,
-        updatedAt: item.updatedAt || item.updated_at
-      }));
+      // ຖ້າ Backend ສົ່ງມາເປັນ { data: [] } ຫຼື Array ກົງໆ ກໍຮອງຮັບໝົດ
+      const rawData = Array.isArray(response.data) ? response.data : (response.data.data || []);
+      return rawData;
     } catch (error) {
       console.error("Fetch Equipment Error:", error);
-      return []; // ສົ່ງ Array ເປົ່າກັບໄປເພື່ອບໍ່ໃຫ້ UI ແຕກ
-    }
-  },
-
-  // ດຶງຂໍ້ມູນຕາມ ID
-  getById: async (id: number | string) => {
-    try {
-      const response = await axiosClient.get(`${API_URL}${PATH}/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error(`Get Equipment ID ${id} Error:`, error);
-      throw error;
+      return [];
     }
   },
 
   // ເພີ່ມຂໍ້ມູນໃໝ່
-  create: async (data: any) => {
+  create: async (payload: any) => {
     try {
-      // ປັບ Payload ໃຫ້ກົງກັບ Backend (Name, Unit, isActive)
-      const payload = {
-        Name: data.Name,
-        Unit: data.Unit,
-        isActive: data.isActive ? 1 : 0
-      };
+      // payload ຈະຖືກສົ່ງມາຈາກ Page ເຊິ່ງມີ item_name, unit, total_quantity, item_type ຄົບແລ້ວ
       const response = await axiosClient.post(`${API_URL}${PATH}`, payload);
       return response.data;
     } catch (error) {
@@ -59,13 +31,8 @@ export const equipmentService = {
   },
 
   // ແກ້ໄຂຂໍ້ມູນ
-  update: async (id: number | string, data: any) => {
+  update: async (id: number | string, payload: any) => {
     try {
-      const payload = {
-        Name: data.Name,
-        Unit: data.Unit,
-        isActive: data.isActive ? 1 : 0
-      };
       const response = await axiosClient.put(`${API_URL}${PATH}/${id}`, payload);
       return response.data;
     } catch (error) {

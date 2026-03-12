@@ -243,7 +243,7 @@ export default function EquipmentPage() {
 
               <div className="flex gap-3 pt-6">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold uppercase text-[12px] hover:bg-slate-200 transition-all">ຍົກເລີກ</button>
-                <button type="submit" className="flex-1 bg-blue-900 text-white py-3 rounded-xl font-bold uppercase text-[12px] shadow-lg shadow-blue-200 active:scale-95 transition-all">ບັນທຶກຂໍ້ມູນ</button>
+                <button type="submit" className="flex-1 bg-blue-900 text-white py-3 rounded-xl font-bold uppercase text-[12px] shadow-lg shadow-slate-200 active:scale-95 transition-all">ບັນທຶກຂໍ້ມູນ</button>
               </div>
             </form>
           </div>
