@@ -38,10 +38,10 @@ export default function CateringItemsPage() {
       
       <div className="max-w-full mx-auto space-y-2">
         {/* --- Header & Search --- */}
-        <div className="bg-white px-6 py-4 rounded-2xl shadow-sm border border-orange-200 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="bg-white px-3 py-1.5 rounded-2xl shadow-sm border border-orange-200 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="bg-orange-900 p-2.5 rounded-xl text-white shadow-lg shadow-slate-200">
-              <FiBox size={23} />
+              <FiBox size={15} />
             </div>
             <div>
               <h1 className="text-xl font-black tracking-tight text-slate-700">ຈັດການ Catering</h1>
