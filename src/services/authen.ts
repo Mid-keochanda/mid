@@ -45,6 +45,7 @@ export interface Booking {
   status: 'Pending' | 'Approved' | 'Rejected';
   is_recurring: boolean | number; 
   recur_pattern: 'none' | 'daily' | 'weekly' | 'monthly';
+  recur_count?: number;
   attendeeCount: number;
   equipments?: { equipment_id: number; quantity: number }[];
   caterings?: { 

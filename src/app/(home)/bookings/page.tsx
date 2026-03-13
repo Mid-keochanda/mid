@@ -6,6 +6,38 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import allLocales from '@fullcalendar/core/locales-all'; 
 import { bookingService } from '@/services/authen'; 
+import { Toaster, toast } from "react-hot-toast";
+
+// 1. ຟັງຊັນແປງຊື່ວັນ (Header) ໃຫ້ເປັນພາສາລາວ
+const renderDayHeader = (arg: any) => {
+  const days = ['ອາທິດ', 'ຈັນ', 'ອັງຄານ', 'ພຸດ', 'ພະຫັດ', 'ສຸກ', 'ເສົາ'];
+  // ໃຊ້ arg.date.getDay() ຈາກ Native Date ຈະປອດໄພທີ່ສຸດ
+  const dayIndex = arg.date.getDay(); 
+  return days[dayIndex];
+};
+
+// 2. ຟັງຊັນແປງ Title ໃຫ້ເປັນ ມີນາ 2026 (ແກ້ Error getMonth)
+const renderTitle = (arg: any) => {
+  const months = [
+    'ມັງກອນ', 'ກຸມພາ', 'ມີນາ', 'ເມສາ', 'ພຶດສະພາ', 'ມິຖຸນາ', 
+    'ກໍລະກົດ', 'ສິງຫາ', 'ກັນຍາ', 'ຕຸລາ', 'ພະຈິກ', 'ທັນວາ'
+  ];
+  // ດຶງຈາກ property ໂດຍກົງ ບໍ່ຕ້ອງໃຊ້ ()
+  const month = months[arg.date.month]; 
+  const year = arg.date.year; 
+  return `${month} ${year}`;
+};
+
+// 3. ຟັງຊັນແປງຄ່າ Pattern ຈາກ Database ມາເປັນພາສາລາວ
+const getRecurLabel = (pattern: string) => {
+  const labels: any = {
+    daily: 'ປະຈຳວັນ',
+    weekly: 'ປະຈຳອາທິດ',
+    monthly: 'ປະຈຳເດືອນ',
+    none: 'ບໍ່ມີການຈອງແບບຊໍ້າ'
+  };
+  return labels[pattern] || 'ບໍ່ມີການຈອງແບບຊໍ້າ';
+};
 
 // --- 1. ເພີ່ມ Interface ເພື່ອປິດຂີດແດງ (ກຳນົດ Type ໃຫ້ຊັດເຈນ) ---
 interface CateringItem {
@@ -162,18 +194,18 @@ const handleEventClick = (info: any) => {
 const handleDelete = async () => {
   const currentId = selectedBooking?.booking_id || selectedBooking?.id;
   if (!currentId || isNaN(Number(currentId))) {
-    alert("❌ ບໍ່ພົບ ID ຂອງການຈອງ");
+    toast.success("❌ ບໍ່ພົບ ID ຂອງການຈອງ");
     return;
   }
   if (window.confirm("ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລົບການຈອງນີ້?")) {
     try {
       await bookingService.delete(currentId);
-      alert("✅ ລົບຂໍ້ມູນສຳເລັດ!");
+     toast.success("ບັນທຶກການຈອງສຳເລັດ");
       setIsViewModalOpen(false);
       setSelectedBooking(null);
       await fetchData();
     } catch (err: any) {
-      alert("❌ ຜິດພາດໃນການລົບ: " + (err.response?.data?.message || "ເກີດຂໍ້ຜິດພາດ"));
+      toast.success("❌ ຜິດພາດໃນການລົບ: " + (err.response?.data?.message || "ເກີດຂໍ້ຜິດພາດ"));
     }
   }
 };
@@ -186,11 +218,10 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   // 1. ກວດສອບ ແລະ ປັບປຸງຂໍ້ມູນ Catering ກ່ອນສົ່ງ
   const cateringPayload = selectedCaterings
     .map((i: any) => ({
-      // ດຶງ ID ຈາກທຸກບ່ອນທີ່ເປັນໄປໄດ້ ເພື່ອປ້ອງກັນການເປັນ 0
       cateringItem_id: Number(i.cateringItem_id || i.catering_item_id || i.id || 0),
       quantity: Number(i.quantity || 1)
     }))
-    .filter(item => item.cateringItem_id > 0); // ສົ່ງສະເພາະອັນທີ່ມີ ID ແທ້ໆ
+    .filter(item => item.cateringItem_id > 0);
 
   // 2. ກວດສອບ ແລະ ປັບປຸງຂໍ້ມູນ Equipment ກ່ອນສົ່ງ
   const equipmentPayload = selectedEquipments
@@ -200,6 +231,10 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     }))
     .filter(item => item.equipment_id > 0);
 
+  // --- ສ່ວນທີ່ປັບປຸງ Logic Recurring ໃໝ່ ---
+  const pattern = formData.get("recurring_pattern") as string;
+  const isRecurring = pattern && pattern !== "none"; 
+
   const payload: any = {
     title: formData.get("title") as string,
     room_id: Number(formData.get("room_id")),
@@ -208,35 +243,46 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     end_time: formData.get("end_time"),
     attendeeCount: Number(formData.get("attendeeCount")),
     status: formData.get("status") || "Pending", 
-    is_recurring: formData.get("is_recurring") === "true" ? 1 : 0,
-    recurring_pattern: formData.get("recurring_pattern") || "none",
-    
+    // ຖ້າ pattern ບໍ່ແມ່ນ none ໃຫ້ເປັນ 1, ຖ້າແມ່ນ none ໃຫ້ເປັນ 0
+    is_recurring: isRecurring ? 1 : 0,
+    recur_pattern: formData.get("recurring_pattern") || 'none',
+    recur_count: isRecurring ? (Number(formData.get("recur_count")) || 1) : 0,
     equipments: equipmentPayload,
     caterings: cateringPayload
   };
+  // ------------------------------------
 
   try {
     if (currentId) {
-      // ຖ້າ Backend ບໍ່ມີ API Update ໂດຍກົງ, ການ Delete ແລ້ວ Create ໃໝ່ຕ້ອງໝັ້ນໃຈວ່າຂໍ້ມູນເກົ່າອອກໝົດແລ້ວ
       await bookingService.delete(currentId); 
       await bookingService.create(payload);
-      alert("✅ ແກ້ໄຂຂໍ້ມູນສຳເລັດ!");
+      toast.success("✅ ແກ້ໄຂຂໍ້ມູນສຳເລັດ!");
     } else {
       await bookingService.create(payload);
-      alert("✅ ບັນທຶກການຈອງໃໝ່ສຳເລັດ!");
+      toast.success("ບັນທຶກການຈອງສຳເລັດ");
     }
     setIsModalOpen(false);
-    await fetchData(); // ໂຫຼດຂໍ້ມູນໃໝ່ທັນທີ
+    await fetchData(); 
   } catch (err: any) {
     console.error("Submit Error:", err);
-    alert("❌ ຜິດພາດ: " + (err.response?.data?.message || "ບໍ່ສາມາດບັນທຶກໄດ້"));
+    toast.error(err.response?.data?.message || "ບໍ່ສາມາດບັນທຶກໄດ້");
   }
 };
 
 return (
+  <>
+  <Toaster
+    position="top-right"
+    toastOptions={{
+      duration: 3000,
+      style: {
+        fontFamily: "Phetsarath OT",
+        fontWeight: "bold"
+      }
+    }}
+  />
   <div className="p-4 md:p-10 bg-[#f8fafc] dark:bg-slate-950 min-h-screen font-sans text-slate-700 dark:text-slate-200 transition-colors duration-300">
     <style>{`
-    /* ເພີ່ມການກຳນົດ Font ໃຫ້ກັບທຸກ Element ພາຍໃນໜ້ານີ້ */
       * {
         font-family: 'Phetsarath OT', 'Phetsarath', sans-serif !important;
       }
@@ -244,11 +290,8 @@ return (
       .fc-theme-standard td, .fc-theme-standard th { border-color: #e2e8f0; }
       .dark .fc-theme-standard td, .dark .fc-theme-standard th { border-color: #334155; }
       .dark .fc-col-header-cell { background: #1e293b !important; }
-      
-      /* ແກ້ໄຂບ່ອນນີ້: ເວລາ Hover ໃຫ້ເປັນສີຟ້າ */
       .fc-daygrid-day:hover { background: rgba(59, 246, 118, 0.1) !important; cursor: pointer; }
       .dark .fc-daygrid-day:hover { background: rgba(59, 246, 103, 0.2) !important; }
-      
       .fc-highlight { background: rgba(59, 130, 246, 0.15) !important; }
       .fc-button { background-color: #ffffff !important; color: #1e293b !important; border: 1px solid #e2e8f0 !important; font-weight: 600 !important; border-radius: 12px !important; }
       .dark .fc-button { background-color: #1e293b !important; color: #f8fafc !important; border-color: #334155 !important; }
@@ -261,7 +304,7 @@ return (
     <div className="max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <h1 className="text-3xl font-black text-slate-800 dark:text-white flex items-center gap-3">
-          <span className="w-2 h-10 bg-blue-600 rounded-full"></span> ປະຕິທິນການຈອງ
+          <span className="w-2 h-10 bg-blue-600 rounded-full"></span> ຈອງຫ້ອງປະຊູມ
         </h1>
         <div className="relative w-full md:w-80">
           <input 
@@ -275,24 +318,38 @@ return (
       </header>
 
       <div className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] shadow-2xl shadow-slate-200/60 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden">
-        <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="dayGridMonth"
-          locales={allLocales} 
-          locale="lo"           
-          events={filteredEvents}
-          selectable={true} 
-          selectMirror={true}
-          dayMaxEvents={true}
-          select={handleDateSelect}
-          eventClick={handleEventClick} 
-          headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' }}
-          height="70vh"
-        />
+     <FullCalendar
+  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+  initialView="dayGridMonth"
+  locales={allLocales}
+  locale="lo" 
+
+  // --- ສ່ວນທີ່ແກ້ໄຂໃຫ້ເປັນພາສາລາວ ແລະ ປີ 2026 ---
+  dayHeaderContent={renderDayHeader} // ແກ້ undefined
+  titleFormat={renderTitle}         // ແກ້ Error getMonth
+  // ------------------------------------------
+
+  headerToolbar={{
+    left: 'prev,next today',
+    center: 'title',
+    right: 'dayGridMonth,timeGridWeek'
+  }}
+  buttonText={{
+    today: 'ມື້ນີ້',
+    month: 'ເດືອນ',
+    week: 'ອາທິດ'
+  }}
+  events={filteredEvents}
+  selectable={true}
+  select={handleDateSelect}
+  eventClick={handleEventClick}
+  dayMaxEvents={true}
+  height="70vh"
+/>
       </div>
     </div>
 
-    {/* 1. Modal View Detail - ປັບຄວາມກວ້າງເປັນ max-w-6xl */}
+    {/* Modal View Detail */}
     {isViewModalOpen && selectedBooking && (
       <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[1000] p-4 text-slate-700 dark:text-slate-200">
         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-6xl shadow-2xl overflow-hidden border dark:border-slate-800 flex flex-col max-h-[90vh]">
@@ -432,7 +489,7 @@ return (
       </div>
     )}
 
-    {/* 2. Modal Form - ປັບຄວາມກວ້າງເປັນ max-w-6xl ໃຫ້ເທົ່າກັບໜ້າ View */}
+    {/* Modal Form */}
     {isModalOpen && (
       <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[999] p-4 text-slate-700 dark:text-slate-200">
         <div className="bg-white dark:bg-slate-900 rounded-[3rem] w-full max-w-6xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col border dark:border-slate-800">
@@ -546,15 +603,48 @@ return (
 
                 <div className="bg-indigo-50/30 dark:bg-indigo-900/10 p-6 rounded-[2rem] border border-indigo-100 dark:border-indigo-900/30 space-y-4">
                   <div className="flex items-center gap-4">
-                    <input type="checkbox" name="is_recurring" value="true" defaultChecked={selectedBooking?.is_recurring == 1 || selectedBooking?.is_recurring === true} className="w-6 h-6 accent-indigo-600 cursor-pointer shadow-sm" id="recur-check" />
-                    <label htmlFor="recur-check" className="font-black text-indigo-900 dark:text-indigo-300 text-base cursor-pointer uppercase tracking-wider">ຈອງແບບຊ້ຳ (Recurring)</label>
+                    <label className="font-black text-indigo-900 dark:text-indigo-300 text-base uppercase tracking-wider">
+                       ຈອງແບບຊ້ຳ (Recurring)
+                    </label>
                   </div>
-                  <select name="recurring_pattern" defaultValue={selectedBooking?.recurring_pattern || selectedBooking?.recur_pattern || "none"} className="w-full bg-white dark:bg-slate-800 p-4 rounded-xl text-base dark:text-white border dark:border-slate-700 focus:ring-2 focus:ring-indigo-500">
-                    <option value="none">-- ບໍ່ມີ --</option>
-                    <option value="daily">ປະຈຳວັນ (Daily)</option>
-                    <option value="weekly">ປະຈຳອາທິດ (Weekly)</option>
-                    <option value="monthly">ປະຈຳເດືອນ (Monthly)</option>
-                  </select>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">ຮູບແບບການຊ້ຳ</label>
+                      <select 
+                        name="recurring_pattern" 
+                        id="recurring_pattern_select"
+                        defaultValue={selectedBooking?.recurring_pattern || selectedBooking?.recur_pattern || "none"} 
+                        onChange={(e) => {
+                          const countInput = document.getElementById('recur_count_input') as HTMLInputElement;
+                          if (countInput) {
+                            countInput.disabled = (e.target.value === "none");
+                            if (e.target.value === "none") countInput.value = "0";
+                          }
+                        }}
+                        className="w-full bg-white dark:bg-slate-800 p-4 rounded-xl text-base dark:text-white border dark:border-slate-700 focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="none">-- ບໍ່ມີ --</option>
+                        <option value="daily">ປະຈຳວັນ (Daily)</option>
+                        <option value="weekly">ປະຈຳອາທິດ (Weekly)</option>
+                        <option value="monthly">ປະຈຳເດືອນ (Monthly)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">ຈຳນວນຄັ້ງທີ່ຊ້ຳ</label>
+                      <input 
+                        type="number" 
+                        name="recur_count" 
+                        id="recur_count_input"
+                        min="1"
+                        defaultValue={selectedBooking?.recur_count || 1} 
+                        disabled={!selectedBooking?.recurring_pattern || selectedBooking?.recurring_pattern === "none"}
+                        className="w-full bg-white dark:bg-slate-800 p-4 rounded-xl text-base dark:text-white border dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -569,5 +659,6 @@ return (
       </div>
     )}
   </div>
+  </>
 );
 }
