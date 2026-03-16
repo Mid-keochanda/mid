@@ -17,7 +17,7 @@ export const NAV_DATA = [
         items: [],
       },
     {
-        title: "ເພີ່ມອຸປະກອນກາງ",
+        title: "ລາຍການພັດສະດຸ",
         url: "/equipment",
         icon: Icons.Table, // ໃຊ້ໄອຄັອນຕາຕະລາງ ສື່ເຖິງການຈັດການລາຍການສາງ
         items: [],

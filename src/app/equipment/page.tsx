@@ -1,273 +1,249 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
-import axiosClient from '@/lib/axiosClient';
-import { FiEdit2, FiTrash2, FiPlus, FiPackage, FiCalendar, FiClock, FiBox, FiSearch, FiTag, FiCheckSquare, FiSquare } from 'react-icons/fi';
-
-const API_PATH = '/equipment'; 
+import { equipmentService } from '@/services/equipment'; 
+import { FiBox, FiPlus, FiEdit2, FiTrash2, FiCalendar, FiClock, FiCheckCircle, FiXCircle, FiSearch } from 'react-icons/fi';
 
 export default function EquipmentPage() {
   const [items, setItems] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  const initialItemState = { id: null, item_name: "", unit: "", item_type: "equipment", total_quantity: 0 };
-  const [currentItem, setCurrentItem] = useState<any>(initialItemState);
+  // --- ສ່ວນທີ່ເພີ່ມໃໝ່: State ສຳລັບການຄົ້ນຫາ ---
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const fetchItems = async () => {
+  const initialForm = { 
+    id: null, 
+    item_name: "", 
+    unit: "", 
+    total_quantity: 0, 
+    item_type: "consumable" 
+  };
+  const [formData, setFormData] = useState<any>(initialForm);
+
+  const fetchItems = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axiosClient.get(API_PATH);
-      const data = Array.isArray(res.data) ? res.data : (res.data.data || []);
+      const res = await equipmentService.getAll();
+      const data = Array.isArray(res) ? res : (res.data || []);
       setItems(data);
     } catch (error) {
-      toast.error("ບໍ່ສາມາດໂຫລດຂໍ້ມູນໄດ້");
+      toast.error("ໂຫຼດຂໍ້ມູນບໍ່ໄດ້");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchItems(); }, []);
+  useEffect(() => { fetchItems(); }, [fetchItems]);
 
-  // ຟັງຊັນແປງຮູບແບບວັນທີ (ຮອງຮັບທັງ CamelCase ແລະ SnakeCase)
-  const formatDateTime = (item: any, type: 'create' | 'update') => {
-    const dateVal = type === 'create' 
-      ? (item.createdAt || item.created_at) 
-      : (item.updatedAt || item.updated_at);
-
-    if (!dateVal) return "---";
-
-    return new Date(dateVal).toLocaleString('lo-LA', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
+  // --- ສ່ວນທີ່ເພີ່ມໃໝ່: Logic ການ Filter ຂໍ້ມູນ ---
   const filteredItems = items.filter(item => 
-    item.item_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.unit?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.item_unit?.toLowerCase().includes(searchTerm.toLowerCase())
+    item.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.id?.toString().includes(searchTerm)
   );
+
+  const formatDateTime = (dateVal: any) => {
+    if (!dateVal) return "-";
+    const d = new Date(dateVal);
+    return d.toLocaleString('en-GB', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    }).replace(',', '');
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload = {
-        item_name: currentItem.item_name,
-        unit: currentItem.unit,
-        item_type: currentItem.item_type,
-        total_quantity: Number(currentItem.total_quantity) 
+      const payload = { 
+        item_name: formData.item_name,
+        unit: formData.unit,
+        total_quantity: Number(formData.total_quantity),
+        item_type: formData.item_type 
       };
 
-      if (currentItem.id) {
-        await axiosClient.put(`${API_PATH}/${currentItem.id}`, payload);
-        toast.success("ອັບເດດສຳເລັດ");
+      if (formData.id) {
+        await equipmentService.update(formData.id, payload);
+        toast.success("ແກ້ໄຂສຳເລັດ");
       } else {
-        await axiosClient.post(API_PATH, payload);
-        toast.success("ບັນທຶກສຳເລັດ");
+        await equipmentService.create(payload);
+        toast.success("ເພີ່ມສຳເລັດ");
       }
       setIsModalOpen(false);
       fetchItems();
     } catch (error) {
-      toast.error("ເກີດຂໍ້ຜິດພາດ");
-    }
-  };
-
-  const handleDelete = async (item: any) => {
-    if (!window.confirm(`ຢືນຢັນການລົບ: ${item.item_name}?`)) return;
-    try {
-      await axiosClient.delete(`${API_PATH}/${item.id}`);
-      toast.success("ລົບແລ້ວ");
-      fetchItems();
-    } catch (error) {
-      toast.error("ລົບບໍ່ສຳເລັດ");
+      toast.error("ບັນທຶກບໍ່ໄດ້");
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8 font-sans text-slate-900">
+     <div className="min-h-screen bg-[#F8FAFC] p-3 md:p-5 font-sans text-slate-900 text-[13px]">
       <Toaster position="top-right" />
       
-      <div className="max-w-full mx-auto space-y-6">
-        {/* Header & Search */}
-        <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 flex flex-col xl:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-4">
-            <div className="p-4 bg-indigo-600 rounded-2xl text-white shadow-lg shrink-0">
-              <FiPackage size={28} />
+      <div className="max-w-full mx-auto space-y-2">
+        
+        {/* Header Section */}
+        <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-blue-300 flex flex-col md:flex-row justify-between items-center gap-2">
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-600 p-1.5 rounded-lg text-white shadow-md">
+              <FiBox size={16} />
             </div>
             <div>
-              <h1 className="text-2xl font-black tracking-tight leading-none">ສາງພັດສະດຸ</h1>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Inventory Management</p>
+              <h1 className="text-xl font-bold text-slate-900">ຈັດການພັດສະດຸ</h1>
+              <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Inventory Management System</p>
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-4 w-full xl:w-auto">
-            <div className="relative w-full md:w-80">
-              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+          {/* --- ສ່ວນທີ່ເພີ່ມໃໝ່: ຊ່ອງຄົ້ນຫາ ແລະ ປຸ່ມເພີ່ມ --- */}
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="relative flex-1 md:w-64">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input 
-                type="text"
-                placeholder="ຄົ້ນຫາອຸປະກອນ..."
-                className="w-full bg-slate-50 border border-slate-200 pl-11 pr-4 py-3.5 rounded-2xl font-bold outline-none focus:border-indigo-500 transition-all text-sm"
+                type="text" 
+                placeholder="ຄົ້ນຫາຊື່ອຸປະກອນ..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-blue-50 border border-blue-200 pl-10 pr-4 py-2 rounded-xl outline-none focus:ring-2 focus:ring-blue-900/10 focus:border-blue-900 font-medium text-sm transition-all"
               />
             </div>
             <button 
-              onClick={() => { setCurrentItem(initialItemState); setIsModalOpen(true); }}
-              className="bg-slate-800 hover:bg-indigo-600 text-white px-15 py-1.5 rounded-2xl font-black transition-all shadow-md flex items-center justify-center gap-2 text-xs uppercase"
+              onClick={() => { setFormData(initialForm); setIsModalOpen(true); }}
+              className="bg-blue-900 hover:bg-blue-800 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-slate-200 whitespace-nowrap"
             >
-              <FiPlus strokeWidth={5} /> ເພີ່ມໃໝ່
+              <FiPlus size={18} /> ເພີ່ມໃໝ່
             </button>
           </div>
         </div>
 
-        {/* Table Container */}
-        <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden">
+        {/* Table Area - ໃຊ້ filteredItems ແທນ items */}
+        <div className="bg-white rounded-xl shadow-sm border border-blue-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
-                <tr className="bg-slate-50/50 text-[15px] font-black uppercase text-slate-400 tracking-widest border-b">
-                  <th className="p-6">ID</th>
-                  <th className="p-6">ຊື່ອຸປະກອນ</th>
-                  <th className="p-6">ຫົວໜ່ວຍ</th>
-                  <th className="p-6">ສະຖານະ</th>
-                  <th className="p-6 text-center">ຈຳນວນ</th>
-                  <th className="p-6">ວັນທີ ບັນທຶກ/ປັບປຸງ</th>
-                  <th className="p-6 text-right">ຈັດການ</th>
+                <tr className="bg-blue-50/80 text-[15px] font-bold uppercase text-blue-500 border-b border-blue-200">
+                  <th className="py-1 px-5 text-center w-24">ID</th>
+                  <th className="py-1 px-2">ລາຍການອຸປະກອນ</th>
+                  <th className="py-1 px-2 text-center">ຈຳນວນ</th>
+                  <th className="py-1 px-2 text-center">ຫົວໜ່ວຍ</th>
+                  <th className="py-1 px-2 text-center">ສະຖານະ</th>
+                  <th className="py-1 px-2">ວັນທີບັນທຶກ</th>
+                  <th className="py-1 px-2">ອັບເດດລ່າສຸດ</th>
+                  <th className="py-1 px-5 text-center">ຈັດການ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredItems.map((item) => (
-                  <tr key={item.id} className="hover:bg-indigo-50/20 transition-all group">
-                    <td className="p-6 font-mono text-[14px] text-slate-300 font-bold">#{item.id}</td>
-                    
-                    {/* ຊື່ອຸປະກອນ */}
-                    <td className="p-6">
-                      <div className="font-black text-slate-800 text-base flex items-center gap-2">
-                        <FiTag className="text-indigo-300" size={14} /> {item.item_name}
-                      </div>
-                    </td>
-
-                    {/* ຫົວໜ່ວຍ */}
-                    <td className="p-6">
-                      <div className="text-sm font-bold text-indigo-500 bg-indigo-50 px-4 py-2 rounded-xl inline-flex items-center gap-2 border border-indigo-100 whitespace-nowrap">
-                        <FiBox size={14} /> 
-                        {item.unit || item.item_unit || '-'}
-                      </div>
-                    </td>
-
-                    {/* ປ່ຽນເປັນ ເອົາ/ບໍ່ເອົາ */}
-                    <td className="p-6">
-                      <span className={`text-[12px] font-black px-5 py-2 rounded-xl uppercase tracking-wider whitespace-nowrap inline-flex items-center justify-center min-w-[90px] ${
-                        item.item_type === 'equipment' 
-                        ? 'bg-green-500 text-white' 
-                        : 'bg-slate-200 text-slate-500'
-                      }`}>
-                        {item.item_type === 'equipment' ? 'ເອົາ' : 'ບໍ່ເອົາ'}
-                      </span>
-                    </td>
-
-                    {/* ຈຳນວນ */}
-                    <td className="p-6 text-center text-3xl font-black text-slate-900 leading-none">
-                      {item.total_quantity ?? 0}
-                    </td>
-
-                    {/* ວັນທີສະແດງຜົນ */}
-                    <td className="p-6">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2 text-[13px] font-bold text-slate-400">
-                          <FiCalendar size={12}/> {formatDateTime(item, 'create')}
+                {filteredItems.length > 0 ? (
+                  filteredItems.map((item) => (
+                    <tr key={item.id} className="hover:bg-slate-50/50 transition-all">
+                      <td className="py-1 px-3 text-center font-mono text-slate-400 text-xs">#{item.id}</td>
+                      <td className="py-1 px-3 font-bold text-slate-700 text-sm">{item.item_name}</td>
+                      <td className="py-1 px-3 text-center">
+                        <span className="inline-block min-w-[20px] py-1 px-2 rounded-lg font-bold text-[12px] text-blue-500 bg-blue-50/50 border border-blue-90">
+                          {item.total_quantity}
+                        </span>
+                      </td>
+                      <td className="py-1 px-3 text-center font-medium text-slate-500 text-sm">{item.unit}</td>
+                      <td className="py-1 px-3 text-center">
+                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border uppercase ${
+                          item.item_type === 'consumable' 
+                          ? 'bg-blue-50 border-blue-100 text-blue-600' 
+                          : 'bg-slate-50 border-slate-100 text-slate-600'
+                        }`}>
+                          {item.item_type === 'consumable' ? <FiCheckCircle size={13}/> : <FiXCircle size={13}/>}
+                          {item.item_type === 'consumable' ? 'ເອົາ' : 'ບໍ່ເອົາ'}
                         </div>
-                        <div className="flex items-center gap-2 text-[13px] font-bold text-indigo-400">
-                          <FiClock size={12}/> {formatDateTime(item, 'update')}
+                      </td>
+                      <td className="py-1 px-3">
+                        <div className="text-[10px] text-slate-600 font-bold flex items-center gap-1.5 whitespace-nowrap">
+                          <FiCalendar className="text-slate-400" size={14}/> {formatDateTime(item.createdAt)}
                         </div>
-                      </div>
-                    </td>
-
-                    <td className="p-6 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                        <button onClick={() => { setCurrentItem(item); setIsModalOpen(true); }} className="p-2.5 text-amber-500 hover:bg-amber-50 rounded-xl border border-amber-100 bg-white shadow-sm">
-                          <FiEdit2 size={16} />
-                        </button>
-                        <button onClick={() => handleDelete(item)} className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl border border-red-100 bg-white shadow-sm">
-                          <FiTrash2 size={16} />
-                        </button>
-                      </div>
+                      </td>
+                      <td className="py-1 px-3">
+                        <div className="text-[10px] text-blue-600 font-bold flex items-center gap-1.5 whitespace-nowrap bg-blue-50/50 px-3 py-1.5 rounded-lg border border-blue-100 w-fit">
+                          <FiClock size={14}/> {formatDateTime(item.updatedAt)}
+                        </div>
+                      </td>
+                      <td className="py-1 px-5 text-center">
+                        <div className="flex justify-center gap-2">
+                          <button 
+                            onClick={() => { setFormData({...item}); setIsModalOpen(true); }} 
+                            className="p-1 text-amber-500 hover:bg-amber-50 rounded border border-amber-100 bg-white shadow-sm transition-all"
+                          >
+                            <FiEdit2 size={13}/>
+                          </button>
+                          <button 
+                            onClick={async () => { if(confirm('ຢືນຢັນການລຶບ?')) { await equipmentService.delete(item.id); fetchItems(); } }} 
+                            className="p-1 text-red-500 hover:bg-red-50 rounded border border-red-100 bg-white shadow-sm transition-all"
+                          >
+                            <FiTrash2 size={13}/>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="py-10 text-center text-slate-400 font-medium">
+                      ບໍ່ພົບຂໍ້ມູນທີ່ທ່ານຄົ້ນຫາ...
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      {/* Modal - ປຸ່ມຕິກ ເອົາ/ບໍ່ເອົາ */}
+      {/* Modal - Standard Size (ຄືເກົ່າເປະ) */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-md p-10 shadow-2xl border border-white">
-            <h2 className="text-xl font-black text-slate-800 mb-8 uppercase tracking-tighter">
-               {currentItem.id ? '✏️ ແກ້ໄຂຂໍ້ມູນ' : '📦 ເພີ່ມລາຍການໃໝ່'}
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-8 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-bold mb-6 text-slate-800 flex items-center gap-3">
+              <div className="w-2 h-7 bg-slate-900 rounded-full"></div>
+              {formData.id ? 'ແກ້ໄຂຂໍ້ມູນພັດສະດຸ' : 'ເພີ່ມພັດສະດຸໃໝ່'}
             </h2>
-            <form onSubmit={handleSave} className="space-y-6">
-              <div>
-                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">ຊື່ອຸປະກອນ</label>
-                <input required className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold focus:border-indigo-500 outline-none transition-all" 
-                  value={currentItem.item_name || ""} onChange={e => setCurrentItem({...currentItem, item_name: e.target.value})} />
+            <form onSubmit={handleSave} className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">ຊື່ອຸປະກອນ / ລາຍການ</label>
+                <input required className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 font-semibold text-sm transition-all" 
+                  value={formData.item_name} onChange={e => setFormData({...formData, item_name: e.target.value})} />
               </div>
-
-              <div>
-                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-3 block">ເລືອກສະຖານະ (ປະເພດ)</label>
-                <div className="flex gap-3">
-                  <button 
-                    type="button"
-                    onClick={() => setCurrentItem({...currentItem, item_type: 'equipment'})}
-                    className={`flex-1 py-5 rounded-2xl font-black text-base transition-all flex items-center justify-center gap-2 border-2 ${
-                      currentItem.item_type === 'equipment' 
-                      ? 'bg-green-600 border-green-600 text-white shadow-lg' 
-                      : 'bg-slate-50 border-transparent text-slate-400 hover:bg-slate-100'
-                    }`}
-                  >
-                    {currentItem.item_type === 'equipment' ? <FiCheckSquare size={20}/> : <FiSquare size={20}/>}
-                    ເອົາ
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => setCurrentItem({...currentItem, item_type: 'consumable'})}
-                    className={`flex-1 py-5 rounded-2xl font-black text-base transition-all flex items-center justify-center gap-2 border-2 ${
-                      currentItem.item_type === 'consumable' 
-                      ? 'bg-slate-400 border-slate-400 text-white shadow-lg' 
-                      : 'bg-slate-50 border-transparent text-slate-400 hover:bg-slate-100'
-                    }`}
-                  >
-                    {currentItem.item_type === 'consumable' ? <FiCheckSquare size={20}/> : <FiSquare size={20}/>}
-                    ບໍ່ເອົາ
-                  </button>
-                </div>
-              </div>
-
+              
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">ຫົວໜ່ວຍ</label>
-                  <input required className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold focus:border-indigo-500 outline-none" 
-                    value={currentItem.unit || ""} onChange={e => setCurrentItem({...currentItem, unit: e.target.value})} />
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">ຫົວໜ່ວຍ</label>
+                  <input required className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 font-semibold text-sm transition-all" 
+                    value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})} />
                 </div>
-                <div>
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">ຈຳນວນ</label>
-                  <input type="number" required className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black text-xl focus:border-indigo-500 outline-none" 
-                    value={currentItem.total_quantity ?? 0} onChange={e => setCurrentItem({...currentItem, total_quantity: e.target.value})} />
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">ຈຳນວນທັງໝົດ</label>
+                  <input required type="number" className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 font-black text-blue-600 text-sm transition-all" 
+                    value={formData.total_quantity} onChange={e => setFormData({...formData, total_quantity: e.target.value})} />
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-[1] bg-red-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-red-100 hover:bg-red-700 transition-all uppercase text-[15px] tracking-widest">ຍົກເລີກ</button>
-                <button type="submit" className="flex-[1] bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all uppercase text-[15px] tracking-widest">
-                  ບັນທຶກຂໍ້ມູນ
-                </button>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">ສະຖານະການເບີກ</label>
+                <div className="relative">
+                  <select 
+                    className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none font-semibold text-sm focus:border-slate-900 transition-all appearance-none cursor-pointer"
+                    value={formData.item_type}
+                    onChange={e => setFormData({...formData, item_type: e.target.value})}
+                  >
+                    <option value="consumable">ເອົາ </option>
+                    <option value="Electronic">ບໍ່ເອົາ </option>
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-40">
+                    <FiBox size={14}/>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-6">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold uppercase text-[12px] hover:bg-slate-200 transition-all">ຍົກເລີກ</button>
+                <button type="submit" className="flex-1 bg-blue-900 text-white py-3 rounded-xl font-bold uppercase text-[12px] shadow-lg shadow-slate-200 active:scale-95 transition-all">ບັນທຶກຂໍ້ມູນ</button>
               </div>
             </form>
           </div>
