@@ -5,7 +5,7 @@ export const NAV_DATA = [
     label: "ຂໍ້ມູນໜ້າຫຼັກ",
     items: [
       {
-        title: "Dashboard",
+        title: "ລວມຍອດຕ່າງໆ",
          url: "/",
           icon: Icons.HomeIcon,
            items: [],
@@ -17,7 +17,7 @@ export const NAV_DATA = [
         items: [],
       },
     {
-        title: "ລາຍການພັດສະດຸ",
+        title: "ລາຍການອຸປະກອນ",
         url: "/equipment",
         icon: Icons.Table, // ໃຊ້ໄອຄັອນຕາຕະລາງ ສື່ເຖິງການຈັດການລາຍການສາງ
         items: [],

@@ -5,7 +5,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import allLocales from '@fullcalendar/core/locales-all'; 
-import { bookingService } from '@/services/authen'; 
+import { bookingService } from '@/lib/authen'; 
 import { Toaster, toast } from "react-hot-toast";
 
 // 1. ຟັງຊັນແປງຊື່ວັນ (Header) ໃຫ້ເປັນພາສາລາວ

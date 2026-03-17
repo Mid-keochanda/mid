@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Lock, User, ArrowRight, Eye, EyeOff, ShieldCheck, AlertCircle } from "lucide-react";
-import { login } from "@/services/authen";
+import { login } from "@/lib/authen";
 import Cookies from "js-cookie";
 
 export default function LoginPage() {
