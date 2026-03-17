@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Lock, User, ArrowRight, Eye, EyeOff, ShieldCheck, AlertCircle } from "lucide-react";
+import { Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { login } from "@/services/authen";
 import Cookies from "js-cookie";
 
@@ -10,7 +10,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   
-  // ໂຄງສ້າງຂໍ້ມູນຄືເກົ່າຕາມທີ່ເຈົ້າຕ້ອງການ
   const [formData, setFormData] = useState({ 
     identity: "", 
     password: "", 
@@ -23,10 +22,7 @@ export default function LoginPage() {
     setErrorMessage("");
 
     try {
-      console.log("ກຳລັງສົ່ງຂໍ້ມູນ:", formData);
       const result = await login(formData);
-      
-      // ກວດສອບ Token ຈາກ Response
       const token = result.access_token;
 
       if (token) {
@@ -45,8 +41,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 text-black font-['Phetsarath_OT',_sans-serif]">
-      {/* ປຸ່ມກຳນົດ Font ຜ່ານ Style Tag ເພື່ອຄວາມແນ່ນອນ */}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#6a11cb] to-[#2575fc] p-4 text-black font-['Phetsarath_OT',_sans-serif]">
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Phetsarath+OT&display=swap');
         body {
@@ -54,82 +49,99 @@ export default function LoginPage() {
         }
       `}</style>
 
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 shadow-inner">
-              <User size={32} />
-            </div>
-          </div>
-          <h1 className="text-2xl font-bold mb-1">ເຂົ້າສູ່ລະບົບ</h1>
-          <p className="text-gray-500 text-sm font-medium">ກະລຸນາປ້ອນຂໍ້ມູນເພື່ອເຂົ້າໃຊ້ງານລະບົບ</p>
+      {/* Main Container */}
+      <div className="max-w-4xl w-full bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[500px]">
+        
+        {/* Left Side: Illustration */}
+        <div className="hidden md:flex flex-1 items-center justify-center bg-white p-12 relative">
+           <div className="relative">
+              {/* Decorative shapes */}
+              <div className="absolute -top-10 -left-10 text-blue-400 opacity-50">○</div>
+              <div className="absolute top-0 -right-10 text-green-400 opacity-50">△</div>
+              <div className="absolute bottom-0 -left-5 text-green-400 opacity-50 font-bold">△</div>
+              <div className="absolute -bottom-10 right-10 text-blue-400 opacity-50">○</div>
+              
+              {/* Laptop Icon Mockup */}
+              <div className="w-64 h-64 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 shadow-sm">
+                <div className="w-40 h-28 bg-[#3d4451] rounded-lg relative flex items-center justify-center border-b-4 border-gray-600">
+                   <div className="w-10 h-10 border-2 border-gray-400 rounded-full flex items-center justify-center">
+                      <div className="w-6 h-3 border-t-2 border-gray-400 rounded-t-full mt-4"></div>
+                   </div>
+                </div>
+              </div>
+           </div>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-5">
-          {errorMessage && (
-            <div className="bg-red-50 p-4 rounded-xl flex items-start gap-3 text-red-600 text-sm border border-red-100 animate-pulse">
-              <AlertCircle size={18} className="mt-0.5 flex-shrink-0" /> 
-              <span className="break-words font-bold">{errorMessage}</span>
-            </div>
-          )}
+        {/* Right Side: Login Form */}
+        <div className="flex-1 p-8 md:p-16 flex flex-col justify-center">
+          <div className="text-center mb-10">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Member Login</h1> pp
+          </div>
 
-          {/* ຫ້ອງປ້ອນຂໍ້ມູນ: Identity */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold ml-1 text-gray-700">ອີເມວ ຫຼື ຊື່ຜູ້ໃຊ້</label>
+          <form onSubmit={handleLogin} className="space-y-4">
+            {errorMessage && (
+              <div className="bg-red-50 p-3 rounded-xl flex items-start gap-2 text-red-600 text-xs border border-red-100">
+                <AlertCircle size={16} className="flex-shrink-0" /> 
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            {/* Input: Identity */}
             <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
               <input
                 type="text" 
                 required
-                className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-                placeholder="ປ້ອນອີເມວ ຫຼື ຊື່ຜູ້ໃຊ້"
+                className="w-full pl-12 pr-4 py-3 bg-[#e6e6e6] border-none rounded-full outline-none focus:ring-2 focus:ring-green-500 transition-all text-sm"
+                placeholder="Email"
                 value={formData.identity}
                 onChange={(e) => setFormData({...formData, identity: e.target.value})}
               />
             </div>
-          </div>
 
-          {/* ຫ້ອງປ້ອນຂໍ້ມູນ: Password */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold ml-1 text-gray-700">ລະຫັດຜ່ານ</label>
+            {/* Input: Password */}
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
               <input
                 type={showPassword ? "text" : "password"}
                 required
-                className="w-full pl-12 pr-12 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all font-sans"
-                placeholder="••••••••"
+                className="w-full pl-12 pr-12 py-3 bg-[#e6e6e6] border-none rounded-full outline-none focus:ring-2 focus:ring-green-500 transition-all text-sm font-sans"
+                placeholder="Password"
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-600"
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-          </div>
-          {/* ປຸ່ມ Submit */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-4 py-4 bg-blue-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg hover:bg-blue-700 active:scale-[0.98] transition-all disabled:bg-blue-300 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <span className="flex items-center gap-2">
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                ກຳລັງກວດສອບ...
-              </span>
-            ) : (
-              <>ເຂົ້າສູ່ລະບົບ <ArrowRight size={20} /></>
-            )}
-          </button>
-        </form>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 bg-[#57b846] text-white rounded-full font-bold uppercase tracking-wider hover:bg-[#4caf50] transition-all shadow-md active:scale-95 disabled:bg-gray-400"
+            >
+              {loading ? "Loading..." : "Login"}
+            </button>
+
+            {/* Links */}
+            <div className="text-center mt-4">
+              <p className="text-xs text-gray-500">
+                Forgot <span className="hover:text-green-600 cursor-pointer">Username / Password?</span>
+              </p>
+            </div>
+
+            <div className="text-center mt-20">
+              <button type="button" className="text-xs font-bold text-gray-600 hover:text-green-600 flex items-center justify-center gap-1 mx-auto transition-all">
+                Create your Account <ArrowRight size={14} />
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
