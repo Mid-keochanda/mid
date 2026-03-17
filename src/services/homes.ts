@@ -9,22 +9,25 @@ export const dashboardService = {
       if (resData.success && resData.stats) {
         const s = resData.stats;
         return {
-          // --- ສ່ວນຂອງ Stats Cards ---
+          // Stats Cards
           pendingApprovals: s.totalPending || 0,
           approvalRate: s.approvalRate || "0%",
           todayBookings: s.todayBookings || 0,
           totalUsers: s.totalUsers || 0,
 
-          // --- ສ່ວນຂອງ Insights ---
+          // Insights
           topRoom: s.topRoom?.room?.room_name || "N/A",
           topEquipment: s.topEquipment?.details?.item_name || "N/A",
           topCatering: s.topCatering?.item_details?.Name || "N/A", 
           
-          // --- ສ່ວນຂອງ Chart/Data ເພີ່ມເຕີມ ---
+          // Chart Data (Mapping ຈາກ JSON ຂອງມຶງ)
+          charts: {
+            dailyTrend: s.charts?.dailyTrend || [],
+            statusSummary: s.charts?.statusSummary || []
+          },
+
           bookingTypes: s.bookingTypes || { recurring: 0, single: 0 },
           totalRejected: s.totalRejected || 0,
-          
-          // --- ສ່ວນຂອງ Table ---
           upcoming: s.upcoming || []
         };
       }
