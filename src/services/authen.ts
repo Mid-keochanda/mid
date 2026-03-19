@@ -1,24 +1,26 @@
 import axios from "axios";
+import Cookies from "js-cookie"; // ເພີ່ມການຈັດການ Cookie
 
 const API = axios.create({
-  baseURL:process.env.NEXT_PUBLIC_API_URL, 
+  baseURL: process.env.NEXT_PUBLIC_API_URL, 
   headers: { "Content-Type": "application/json" },
 });
 
 API.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("token");
+    // ກວດເຊັກ Token ຈາກທັງ localStorage ແລະ Cookie
+    const token = localStorage.getItem("token") || Cookies.get("token");
     if (token) config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 }, (error) => Promise.reject(error));
 
-// --- Interfaces (ຮັກສາໄວ້ຄືເກົ່າທັງໝົດ) ---
+// --- Interfaces (ຮັກສາໄວ້ຄືເກົ່າ) ---
 
 export interface LoginResponse {
   message: string;
   access_token: string;
-  data?: any;
+  data?: any; // ປົກກະຕິ backend ຈະສົ່ງຂໍ້ມູນ user ມາໃນນີ້
 }
 
 export interface Equipment {
@@ -63,11 +65,30 @@ export interface Booking {
 
 export async function login(data: any): Promise<LoginResponse> {
   const response = await API.post<LoginResponse>("/users/login", data);
+  
   if (response.data.access_token) {
-    localStorage.setItem("token", response.data.access_token);
+    const token = response.data.access_token;
+    // ດຶງ role ຈາກ response (ປັບໃຫ້ກົງກັບ Backend ຂອງເຈົ້າ ເຊັ່ນ: response.data.data.role)
+    const role = response.data.data?.role || "user"; 
+
+    // 1. ເກັບລົງ localStorage (ໄວ້ໃຊ້ໃນ Client components)
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", role);
+
+    // 2. ເກັບລົງ Cookie (ສຳຄັນຫຼາຍ: ເພື່ອໃຫ້ Middleware ອ່ານໄດ້ ແລະ ເຊົາກະພິບ)
+    Cookies.set("token", token, { expires: 7 }); // ເກັບໄວ້ 7 ວັນ
+    Cookies.set("role", role, { expires: 7 });
   }
   return response.data;
 }
+
+// ຟັງຊັນ Logout ເພື່ອລຶບຂໍ້ມູນທັງໝົດ
+export const logout = () => {
+  localStorage.clear();
+  Cookies.remove("token");
+  Cookies.remove("role");
+  window.location.href = "/login";
+};
 
 export const bookingService = {
   getAll: async () => {
@@ -122,18 +143,15 @@ export const bookingService = {
   },
 
   create: async (data: Booking) => {
-    // ແຍກ metadata ທີ່ບໍ່ກ່ຽວຂ້ອງກັບ DB ອອກ
     const { id, booking_id, room, user, booking_equipments, booking_caterings, ...rest } = data as any;
     
     const payload = {
       ...rest,
-      // ຮັບປະກັນວ່າເປັນ ISO String ເພື່ອໃຫ້ Backend Parse ໄດ້ 100%
       start_time: new Date(data.start_time).toISOString(),
       end_time: new Date(data.end_time).toISOString(),
       is_recurring: data.is_recurring ? 1 : 0,
       recurring_pattern: data.recur_pattern || 'none',
       caterings: (data.caterings || []).map(item => ({
-        // ໃຊ້ cateringItem_id ໃຫ້ກົງກັບ Backend Controller ທີ່ໃຊ້ sequelize.transaction
         cateringItem_id: Number(item.catering_item_id || item.cateringItem_id), 
         quantity: Number(item.quantity)
       })),
@@ -152,7 +170,6 @@ export const bookingService = {
   },
 
   update: async (id: number | string, data: Booking) => {
-    // ປັບ Payload ໃຫ້ກົງກັບ Sequelize Transaction ຂອງ Backend
     const payload = {
       title: data.title,
       room_id: Number(data.room_id),
@@ -162,9 +179,8 @@ export const bookingService = {
       attendeeCount: Number(data.attendeeCount),
       status: data.status,
       is_recurring: data.is_recurring ? 1 : 0,
-      recur_pattern: data.recur_pattern || 'none', // ໃຊ້ Key ໃຫ້ຕົງກັບ Interface
+      recur_pattern: data.recur_pattern || 'none',
       caterings: (data.caterings || []).map(item => ({
-        // ສົ່ງ cateringItem_id ເທົ່ານັ້ນ (ບໍ່ເອົາ id ຂອງ Pivot table ໄປກວນ)
         cateringItem_id: Number(item.cateringItem_id || item.catering_item_id),
         quantity: Number(item.quantity)
       })),

@@ -1,217 +1,250 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { FiBox, FiCheckCircle, FiClock, FiUsers, FiTrendingUp, FiMapPin, FiRefreshCw, FiArrowRight, FiActivity, FiCalendar, FiExternalLink } from "react-icons/fi";
+import { 
+  FiCheckCircle, FiClock, FiUsers, FiTrendingUp, FiRefreshCw, 
+  FiCalendar, FiHome, FiCoffee, FiLayers, FiAlertCircle, FiFileText, 
+  FiBarChart2, FiActivity 
+} from "react-icons/fi";
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as AreaTooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Tooltip as PieTooltip 
+} from "recharts";
 import { dashboardService } from "@/services/homes";
 import { toast } from "react-hot-toast";
-import { useRouter } from "next/navigation"; // ເພີ່ມຕົວນີ້ເຂົ້າມາສຳລັບການປ່ຽນໜ້າ
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
-  const router = useRouter(); // ເອີ້ນໃຊ້ router
+  const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // 1. ກວດເຊັກ Token ແລະ Role ຈາກ localStorage
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    // 2. ຖ້າບໍ່ມີ Token (ບໍ່ໄດ້ Login) ໃຫ້ດີດໄປໜ້າ Login
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    // 3. ຖ້າ Role ບໍ່ແມ່ນ admin (ເປັນ user ທົ່ວໄປ) ໃຫ້ດີດໄປໜ້າ User Dashboard
+    // ເພື່ອປ້ອງກັນບໍ່ໃຫ້ User ພິມ URL ເຂົ້າມາເບິ່ງຂໍ້ມູນສະຖິຕິຂອງ Admin
+    if (role !== "admin") {
+      router.push("/user-dashboard"); 
+      return;
+    }
+
+    // ຖ້າຜ່ານເງື່ອນໄຂທັງໝົດ ຈຶ່ງອະນຸຍາດໃຫ້ສະແດງໜ້າເວັບ ແລະ ໂຫຼດຂໍ້ມູນ
+    setMounted(true);
+    loadData();
+  }, [router]);
 
   const loadData = async () => {
     setLoading(true);
-    const stats = await dashboardService.getStats();
-    if (stats) {
-      setData(stats);
-    } else {
-      toast.error("ບໍ່ສາມາດດຶງຂໍ້ມູນສະຖິຕິໄດ້");
+    try {
+      const stats = await dashboardService.getStats();
+      if (stats) setData(stats);
+    } catch (error) {
+      toast.error("ບໍ່ສາມາດໂຫຼດຂໍ້ມູນໄດ້");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  useEffect(() => { loadData(); }, []);
+  const STATUS_COLORS: { [key: string]: string } = {
+    Approved: "#10B981", 
+    Pending: "#F59E0B",  
+    Rejected: "#EF4444" 
+  };
 
-  const recurringCount = data?.bookingTypes?.recurring || 0;
-  const singleCount = data?.bookingTypes?.single || 0;
-  const totalBookings = recurringCount + singleCount;
-  const recurringPercent = totalBookings > 0 ? (recurringCount / totalBookings) * 100 : 0;
-  const singlePercent = totalBookings > 0 ? (singleCount / totalBookings) * 100 : 0;
-
-  // ເພີ່ມ path ສຳລັບ link ໄປໜ້າອື່ນໆ ໃຫ້ຕົງກັບໂປຣເຈັກເຈົ້າ
-  const statsConfig = [
-    { label: "ລໍຖ້າອະນຸມັດ", value: data?.pendingApprovals || 0, icon: <FiClock />, color: "text-amber-500", glow: "shadow-amber-200", bg: "bg-amber-50", link: "/approvals" }, // ໄປໜ້າອະນຸມັດ
-    { label: "ອັດຕາອະນຸມັດ", value: data?.approvalRate || "0%", icon: <FiTrendingUp />, color: "text-emerald-500", glow: "shadow-emerald-200", bg: "bg-emerald-50", link: "/"}, // ໄປໜ້າລາຍງານ
-    { label: "ການຈອງມື້ນີ້", value: data?.todayBookings || 0, icon: <FiCheckCircle />, color: "text-blue-500", glow: "shadow-blue-200", bg: "bg-blue-50", link: "/bookings" }, // ໄປໜ້າການຈອງ
-    { label: "ຜູ້ໃຊ້ທັງໝົດ", value: data?.totalUsers || 0, icon: <FiUsers />, color: "text-purple-500", glow: "shadow-purple-200", bg: "bg-purple-50", link: "/user" }, // ໄປໜ້າຈັດການຜູ້ໃຊ້
-  ];
+  // ປ້ອງກັນ Hydration Error ຖ້າ Component ຍັງບໍ່ທັນ Mount ຝັ່ງ Client
+  if (!mounted) return null;
 
   return (
-    <div className="p-6 md:p-10 bg-gradient-to-br from-slate-50 to-[#F4F7FE] min-h-screen font-sans selection:bg-indigo-100 selection:text-indigo-900">
+    <div className="p-6 md:p-8 bg-[#F1F5F9] min-h-screen font-sans">
       
-      {/* --- HEADER SECTION --- */}
-      <div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      {/* 1. HEADER */}
+      <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight flex items-center gap-4">
-            <span className="w-3 h-10 bg-gradient-to-b from-indigo-500 to-violet-600 rounded-full shadow-lg shadow-indigo-200" />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
-              Dashboard Overview
-            </span>
-          </h1>
-          <p className="text-slate-500 font-medium mt-2 ml-7">ຍິນດີຕ້ອນຮັບ, ຕິດຕາມສະຖານະການຈອງ ແລະ ອຸປະກອນແບບ Real-time.</p>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">ພາບລວມລະບົບ</h1>
+          <p className="text-slate-400 text-xs font-medium">ສະຖິຕິ ແລະ ຂໍ້ມູນການຈອງທັງໝົດ</p>
         </div>
-        <button 
-          onClick={loadData} 
-          disabled={loading}
-          className="group flex items-center gap-2 px-6 py-3 bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-2xl shadow-sm text-sm font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-all duration-300 active:scale-95 disabled:opacity-50"
-        >
-          <FiRefreshCw className={`${loading ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"} text-indigo-500`} /> 
-          ຣີເຟຣດຂໍ້ມູນ
+        <button onClick={loadData} className="p-2.5 bg-white rounded-xl border shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2 text-xs font-bold text-slate-600">
+          <FiRefreshCw className={`${loading ? "animate-spin" : ""}`} /> ຣີເຟຣດຂໍ້ມູນ
         </button>
       </div>
 
-      {/* --- STATS CARDS (ກົດໄດ້ແລ້ວ) --- */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        {statsConfig.map((item, i) => (
-          <div 
-            key={i} 
-            onClick={() => router.push(item.link)} // ສັ່ງໃຫ້ປ່ຽນໜ້າເວລາກົດ
-            className="cursor-pointer relative bg-white p-7 rounded-[28px] border border-slate-100 shadow-xl shadow-slate-200/40 group hover:-translate-y-1.5 transition-all duration-300 overflow-hidden"
-            title={`ກົດເພື່ອໄປໜ້າ ${item.label}`}
-          >
-            {/* Background Decoration */}
-            <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20 blur-2xl transition-all duration-500 group-hover:scale-150 ${item.bg}`} />
-            
-            <div className="relative z-10 flex justify-between items-start mb-6">
-              <div className={`${item.bg} ${item.color} w-14 h-14 rounded-[18px] flex items-center justify-center text-2xl shadow-lg ${item.glow} group-hover:scale-110 transition-transform duration-500`}>
-                {item.icon}
-              </div>
-              <div className="flex flex-col items-end gap-2">
-                <div className="flex items-center gap-1.5 text-[10px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full uppercase tracking-wider">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
-                </div>
-                {/* ໄອຄອນລູກສອນບອກວ່າກົດໄດ້ */}
-                <FiExternalLink className="text-slate-300 group-hover:text-indigo-400 transition-colors opacity-0 group-hover:opacity-100" />
-              </div>
+      {/* 2. STATS CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {[
+          { label: "ລໍຖ້າອະນຸມັດ", value: data?.pendingApprovals, icon: <FiClock />, border: "border-orange-500", text: "text-orange-500" },
+          { label: "ອັດຕາການອະນຸມັດ", value: data?.approvalRate, icon: <FiTrendingUp />, border: "border-emerald-500", text: "text-emerald-500" },
+          { label: "ການຈອງມື້ນີ້", value: data?.todayBookings, icon: <FiCheckCircle />, border: "border-blue-500", text: "text-blue-500" },
+          { label: "ຜູ້ໃຊ້ທັງໝົດ", value: data?.totalUsers, icon: <FiUsers />, border: "border-purple-500", text: "text-purple-500" },
+        ].map((item, i) => (
+          <div key={i} className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${item.border} flex items-center justify-between`}>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.label}</p>
+              <h3 className="text-xl font-black text-slate-800 mt-1">{loading ? "..." : item.value}</h3>
             </div>
-            <div className="relative z-10">
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{item.label}</p>
-              <h3 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight group-hover:text-indigo-600 transition-colors">
-                {loading ? <span className="inline-block w-20 h-10 bg-slate-100 animate-pulse rounded-xl" /> : item.value}
-              </h3>
-            </div>
+            <div className={`${item.text} text-2xl opacity-20`}>{item.icon}</div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         
-        {/* --- UPCOMING TABLE --- */}
-        <div className="lg:col-span-2 bg-white/80 backdrop-blur-xl rounded-[32px] shadow-2xl shadow-slate-200/50 border border-white overflow-hidden flex flex-col">
-          <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-white/50">
-            <h3 className="text-lg font-black text-slate-800 flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><FiCalendar /></div>
-              ລາຍການຈອງທີ່ຈະມາເຖິງ
-            </h3>
-            {/* ປຸ່ມເບິ່ງທັງໝົດ ກົດແລ້ວໄປໜ້າ Bookings */}
-            <button 
-              onClick={() => router.push('/bookings')} 
-              className="px-4 py-2 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-xl hover:bg-indigo-600 hover:text-white transition-all duration-300 flex items-center gap-2 group"
-            >
-              ເບິ່ງທັງໝົດ <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
-            </button>
+        {/* 3. AREA CHART */}
+        <div className="xl:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <h3 className="text-sm font-bold text-slate-700 mb-6 flex items-center gap-2">
+            <FiBarChart2 className="text-indigo-500" /> ແນວໂນ້ມການຈອງ 7 ວັນຜ່ານມາ
+          </h3>
+          <div className="h-[280px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data?.charts?.dailyTrend || []}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="date" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fontSize: 10, fill: '#94a3b8'}} 
+                  tickFormatter={(v)=>v.split('-').reverse().slice(0,2).join('/')} 
+                />
+                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} />
+                <AreaTooltip />
+                <Area type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorIndigo)" />
+                <defs>
+                  <linearGradient id="colorIndigo" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
-          
-          <div className="overflow-x-auto flex-1 p-2">
-            <table className="w-full text-left border-collapse">
+        </div>
+
+        {/* 4. PIE CHART STATUS */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center">
+          <h3 className="text-sm font-bold text-slate-700 mb-6 self-start flex items-center gap-2">
+            <FiLayers className="text-indigo-600" /> ສະຫຼຸບສະຖານະການຈອງ
+          </h3>
+          <div className="h-[180px] w-full relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie 
+                  data={data?.charts?.statusSummary || []} 
+                  innerRadius={55} 
+                  outerRadius={75} 
+                  paddingAngle={5} 
+                  dataKey="count" 
+                  nameKey="status" 
+                  stroke="none"
+                >
+                  {data?.charts?.statusSummary?.map((entry: any, index: number) => (
+                    <Cell key={index} fill={STATUS_COLORS[entry.status] || "#cbd5e1"} />
+                  ))}
+                </Pie>
+                <PieTooltip />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-2xl font-black text-slate-800">
+                  {data?.charts?.statusSummary?.reduce((a:any, b:any)=>a+b.count, 0) || 0}
+                </span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">ທັງໝົດ</span>
+            </div>
+          </div>
+          <div className="w-full mt-6 space-y-1.5">
+            {data?.charts?.statusSummary?.map((s: any, i: number) => (
+              <div key={i} className="flex justify-between items-center text-[10px] font-bold bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                <span className="text-slate-500 flex items-center gap-1.5 uppercase tracking-tight">
+                  <div className="w-2 h-2 rounded-full" style={{backgroundColor: STATUS_COLORS[s.status]}} /> 
+                  {s.status === 'Approved' ? 'ອະນຸມັດແລ້ວ' : s.status === 'Pending' ? 'ລໍຖ້າອະນຸມັດ' : 'ປະຕິເສດ'}
+                </span>
+                <span className="text-slate-800">{s.count} ລາຍການ</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 5. TABLE: RECENT BOOKINGS */}
+        <div className="xl:col-span-4 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mt-4">
+          <div className="p-5 border-b border-slate-50 flex items-center gap-2">
+            <FiCalendar className="text-indigo-600" />
+            <h3 className="font-bold text-slate-700 text-sm">ລາຍການຈອງລ່າສຸດ</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
               <thead>
-                <tr className="text-slate-400 text-[11px] font-black uppercase tracking-wider border-b border-slate-100">
-                  <th className="px-6 py-5">ຂໍ້ມູນການຈອງ</th>
-                  <th className="px-6 py-5">ສະຖານທີ່ / ຫ້ອງ</th>
-                  <th className="px-6 py-5">ວັນທີ & ເວລາ</th>
-                  <th className="px-6 py-5 text-center">ສະຖານະ</th>
+                <tr className="bg-[#F8FAFC] text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-100">
+                  <th className="px-8 py-4">ຫົວຂໍ້ການຈອງ</th>
+                  <th className="px-6 py-4">ຫ້ອງປະຊຸມ</th>
+                  <th className="px-6 py-4">ວັນທີ / ເວລາ</th>
+                  <th className="px-8 py-4 text-center">ສະຖານະ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {loading ? (
-                   <tr><td colSpan={4} className="py-16 text-center text-slate-400 animate-pulse font-medium">ກຳລັງໂຫຼດຂໍ້ມູນ...</td></tr>
-                ) : data?.upcoming?.length > 0 ? (
-                  data.upcoming.map((item: any) => (
-                    // ແຖວຕາຕະລາງກໍສາມາດກົດໄປເບິ່ງລາຍລະອຽດໄດ້
-                    <tr 
-                      key={item.id} 
-                      onClick={() => router.push(`/bookings/${item.id}`)}
-                      className="group hover:bg-slate-50/80 transition-all duration-200 cursor-pointer"
-                      title="ກົດເພື່ອເບິ່ງລາຍລະອຽດການຈອງ"
-                    >
-                      <td className="px-6 py-5">
-                        <p className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{item.title}</p>
-                        <p className="text-[10px] text-slate-400 font-medium mt-0.5 group-hover:text-indigo-400">Booking ID: #{item.id}</p>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 bg-white border border-slate-100 px-3 py-1.5 rounded-lg shadow-sm group-hover:border-indigo-100 transition-colors">
-                          <FiMapPin className="text-indigo-400" />
-                          {item.room?.room_name || 'ບໍ່ລະບຸ'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <p className="text-xs font-bold text-slate-700">{item.start_time?.split(' ')[0]}</p>
-                        <p className="text-[11px] text-slate-500 font-mono mt-0.5 bg-slate-100 inline-block px-1.5 rounded group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">{item.start_time?.split(' ')[1]}</p>
-                      </td>
-                      <td className="px-6 py-5 text-center">
-                        <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-xl text-[10px] font-black border ${
-                          item.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-                        }`}>
-                          {item.status}
+                {data?.upcoming?.map((item: any, idx: number) => (
+                  <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-8 py-4">
+                      <div className="flex items-center gap-3">
+                        <FiFileText className="text-slate-300" />
+                        <span className="text-sm font-bold text-slate-700">{item.title}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="bg-slate-100 px-2.5 py-1 rounded text-[11px] font-bold text-slate-600 border border-slate-200">
+                        {item.room?.room_name}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-700">{item.start_time?.split(' ')[0]}</span>
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          {item.start_time?.split(' ')[1].substring(0,5)} - {item.end_time?.split(' ')[1].substring(0,5)}
                         </span>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                   <tr><td colSpan={4} className="py-16 text-center text-slate-400 italic">ບໍ່ມີລາຍການຈອງທີ່ຈະມາເຖິງ</td></tr>
-                )}
+                      </div>
+                    </td>
+                    <td className="px-8 py-4 text-center">
+                      <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${
+                        item.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                        item.status === 'Pending' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                        'bg-red-50 text-red-600 border-red-100'
+                      }`}>
+                        {item.status === 'Approved' ? 'ອະນຸມັດແລ້ວ' : item.status === 'Pending' ? 'ລໍຖ້າອະນຸມັດ' : 'ປະຕິເສດ'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* ... (ສ່ວນ Insight Sidebar ທີ່ເຫຼືອຄືເກົ່າເລີຍ) ... */}
-        {/* INSIGHTS SIDEBAR */}
-        <div className="space-y-8">
-          
-          {/* 💎 Premium Gradient Card */}
-          <div 
-            onClick={() => router.push('/equipments')} // ກົດກ່ອງນີ້ໄປໜ້າອຸປະກອນ
-            className="cursor-pointer bg-gradient-to-br from-indigo-600 via-purple-600 to-fuchsia-600 rounded-[32px] p-8 text-white shadow-2xl shadow-purple-500/30 relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300"
-          >
-            {/* ... ເນື້ອຫາທາງໃນຄືເກົ່າ ... */}
-             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 group-hover:translate-x-1/4 transition-transform duration-1000" />
-             <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-900/40 rounded-full blur-2xl translate-y-1/3 -translate-x-1/4" />
-             <div className="relative z-10">
-                <div className="flex justify-between items-center mb-8">
-                  <h4 className="font-black text-white/90 text-xs uppercase tracking-widest flex items-center gap-2">
-                    <FiActivity /> ຍອດນິຍົມສູງສຸດ
-                  </h4>
-                  <FiExternalLink className="opacity-50 group-hover:opacity-100 transition-opacity" />
-                </div>
-                
-                <div className="space-y-6">
-                  <div className="flex items-center gap-5 p-4 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl hover:bg-white/20 transition-colors">
-                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-xl shadow-inner">
-                      <FiMapPin />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-indigo-200 uppercase tracking-wide">ຫ້ອງທີ່ໃຊ້ຫຼາຍສຸດ</p>
-                      <p className="text-lg font-black text-white">{data?.topRoom || "ກຳລັງໂຫຼດ..."}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-5 p-4 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl hover:bg-white/20 transition-colors">
-                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-xl shadow-inner">
-                      <FiBox />
-                    </div>
-                    <div className="w-full overflow-hidden">
-                      <p className="text-[10px] font-bold text-indigo-200 uppercase tracking-wide">ອຸປະກອນທີ່ຖືກຢືມຫຼາຍສຸດ</p>
-                      <p className="text-lg font-black text-white truncate">{data?.totalEquipment || "ກຳລັງໂຫຼດ..."}</p>
-                    </div>
-                  </div>
-                </div>
-             </div>
-          </div>
-
-          {/* ... (Progress Circle Card ຄືເກົ່າ) ... */}
+        {/* 6. BOTTOM INSIGHTS */}
+        <div className="xl:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-6 mt-4">
+           <div className="bg-[#1E293B] p-6 rounded-2xl text-white shadow-lg">
+              <h4 className="text-[10px] font-bold uppercase text-slate-400 mb-4 flex items-center gap-2"><FiActivity /> ຫ້ອງທີ່ນິຍົມໃຊ້ຫຼາຍສຸດ</h4>
+              <p className="text-lg font-black">{data?.topRoom || "ບໍ່ມີຂໍ້ມູນ"}</p>
+           </div>
+           <div className="bg-white p-6 rounded-2xl border shadow-sm">
+              <h4 className="text-[10px] font-bold uppercase text-slate-400 mb-4 flex items-center gap-2"><FiCoffee /> ອາຫານ ແລະ ເຄື່ອງດື່ມຍອດນິຍົມ</h4>
+              <p className="text-lg font-black text-slate-800">{data?.topCatering || "ບໍ່ມີຂໍ້ມູນ"}</p>
+           </div>
+           <div className="bg-white p-6 rounded-2xl border shadow-sm">
+              <h4 className="text-[10px] font-bold uppercase text-slate-400 mb-4 flex items-center gap-2"><FiHome /> ອຸປະກອນທີ່ຖືກໃຊ້ຫຼາຍສຸດ</h4>
+              <p className="text-lg font-black text-slate-800">{data?.topEquipment || "ບໍ່ມີຂໍ້ມູນ"}</p>
+           </div>
+           <div className="bg-white p-6 rounded-2xl border shadow-sm">
+              <h4 className="text-[10px] font-bold uppercase text-slate-400 mb-4 flex items-center gap-2"><FiAlertCircle /> ລາຍການທີ່ຖືກປະຕິເສດ</h4>
+              <p className="text-lg font-black text-red-500">{data?.totalRejected || 0} ລາຍການ</p>
+           </div>
         </div>
+
       </div>
     </div>
   );

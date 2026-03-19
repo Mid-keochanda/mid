@@ -44,7 +44,7 @@ export default function CateringItemsPage() {
               <FiBox size={15} />
             </div>
             <div>
-              <h1 className="text-xl font-black tracking-tight text-slate-700">ຈັດການ Catering</h1>
+              <h1 className="text-xl font-black tracking-tight text-slate-700">ຈັດການສິ່ງຂອງ</h1>
               <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Inventory Management</p>
             </div>
           </div>

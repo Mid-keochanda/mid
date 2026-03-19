@@ -4,8 +4,10 @@ import React, { useState } from "react";
 import { Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { login } from "@/services/authen";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation"; // ເພີ່ມ useRouter
 
 export default function LoginPage() {
+  const router = useRouter(); // ປະກາດໃຊ້ router
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -20,15 +22,34 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setErrorMessage("");
-
     try {
-      const result = await login(formData);
+      // ດຶງຂໍ້ມູນການ Login ຈາກ Service
+      const result = await login(formData) as any; 
       const token = result.access_token;
+      const role = result.role; 
 
       if (token) {
+        // 1. ເກັບ Token ແລະ Role ລົງໃນ Cookies (ສຳລັບ Middleware ເຊັກຝັ່ງ Server)
         Cookies.set("token", token, { expires: 7 }); 
+        if (role) {
+          Cookies.set("role", role, { expires: 7 });
+        }
+
+        // 2. ເກັບລົງ localStorage (ສຳລັບການໃຊ້ງານພາຍໃນ Component ຝັ່ງ Client)
         localStorage.setItem("token", token);
-        window.location.href = "/"; 
+        if (role) {
+          localStorage.setItem("role", role);
+        }
+        
+        // 3. ດີດໄປໜ້າ Dashboard ຕາມ Role ໂດຍໃຊ້ router.push (ຈະ Smooth ກວ່າ window.location)
+        if (role === "admin") {
+          router.push("/"); 
+        } else if (role === "user") {
+          router.push("/user-dashboard"); 
+        } else {
+          router.push("/"); 
+        }
+
       } else {
         setErrorMessage("ເຂົ້າສູ່ລະບົບສຳເລັດ ແຕ່ຫາ Token ບໍ່ເຫັນ");
       }
@@ -51,10 +72,9 @@ export default function LoginPage() {
         }
       `}</style>
 
-      {/* ປັບໃຫ້ມີ Container ຄຸມເພື່ອໃຫ້ຝັ່ງຊ້າຍ ແລະ ຂວາ ຍັບເຂົ້າມາໃກ້ກັນ */}
       <div className="w-full max-w-[1000px] flex flex-col md:flex-row items-center justify-between p-6">
         
-        {/* ຝັ່ງຊ້າຍ: Illustration (ປັບຂະໜາດໃຫ້ພໍດີ) */}
+        {/* Left Side: Illustration */}
         <div className="hidden md:flex flex-1 items-center justify-center relative">
            <div className="relative">
               <div className="absolute -top-12 -left-12 text-blue-400 opacity-40 text-2xl">○</div>
@@ -72,7 +92,7 @@ export default function LoginPage() {
            </div>
         </div>
 
-        {/* ຝັ່ງຂວາ: Login Form (ປັບໃຫ້ຍັບເຂົ້າມາຫາຝັ່ງຊ້າຍ) */}
+        {/* Right Side: Login Form */}
         <div className="flex-1 flex flex-col justify-center items-center">
           <div className="w-full max-w-sm">
             <div className="text-center mb-10">

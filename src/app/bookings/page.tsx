@@ -211,92 +211,167 @@ const handleDelete = async () => {
 };
 
 const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+
   e.preventDefault();
+
   const formData = new FormData(e.currentTarget);
-  
-  // ດຶງ ID ຂອງການຈອງ (ຖ້າເປັນການແກ້ໄຂ)
+
   const currentId = selectedBooking?.booking_id || selectedBooking?.id;
 
-  // 1. ກຽມຂໍ້ມູນ Catering
+
+
+  // 1. ກວດສອບ ແລະ ປັບປຸງຂໍ້ມູນ Catering ກ່ອນສົ່ງ
+
   const cateringPayload = selectedCaterings
-    .filter((i: any) => Number(i.cateringItem_id || i.id) > 0)
-    .map((i: any) => ({
-      cateringItem_id: Number(i.cateringItem_id || i.id),
-      quantity: Number(i.quantity || 1)
-    }));
 
-  // 2. ກຽມຂໍ້ມູນ Equipment
+    .map((i: any) => ({
+
+      cateringItem_id: Number(i.cateringItem_id || i.catering_item_id || i.id || 0),
+
+      quantity: Number(i.quantity || 1)
+
+    }))
+
+    .filter(item => item.cateringItem_id > 0);
+
+
+
+  // 2. ກວດສອບ ແລະ ປັບປຸງຂໍ້ມູນ Equipment ກ່ອນສົ່ງ
+
   const equipmentPayload = selectedEquipments
-    .filter((i: any) => Number(i.equipment_id || i.id) > 0)
-    .map((i: any) => ({
-      equipment_id: Number(i.equipment_id || i.id),
-      quantity: Number(i.quantity || 1)
-    }));
 
-  // --- 🚀 ສ່ວນທີ່ແກ້ໄຂ: Logic ກວດສອບສາງໃຫ້ກົງກັບ Backend ---
-  for (const item of equipmentPayload) {
-    // ຊອກຫາອຸປະກອນໃນລາຍການທັງໝົດ (allEquipments)
-    const stockItem = allEquipments.find((e: any) => Number(e.id) === item.equipment_id);
+    .map((i: any) => ({
+
+      equipment_id: Number(i.equipment_id || i.id || 0),
+
+      quantity: Number(i.quantity || 1)
+
+    }))
+
+    .filter(item => item.equipment_id > 0);
+
+    // 🚀 ສ່ວນທີ່ເພີ່ມເຂົ້າໄປໃນ handleSubmit
+for (const item of equipmentPayload) {
+  // 1. ຫາຂໍ້ມູນອຸປະກອນໃນ allEquipments ດ້ວຍ ID
+  const stockItem = allEquipments.find((e: any) => Number(e.id) === item.equipment_id);
+  
+  if (stockItem) {
+    // 2. ດຶງຄ່າຈຳນວນມາເຊັກ (ຕ້ອງໃຊ້ total_quantity ຕາມ Backend)
+    const availableQty = Number(stockItem.total_quantity || 0);
     
-    if (stockItem) {
-      // ດຶງຄ່າຈາກ total_quantity (ຕາມໂຄ້ດ Backend ທີ່ເຈົ້າສົ່ງມາ)
-      const availableQty = Number(stockItem.total_quantity || 0);
-      
-      if (item.quantity > availableQty) {
-        // ແຈ້ງເຕືອນ ແລະ ຢຸດການເຮັດວຽກ
-        toast.error(`❌ ${stockItem.item_name || 'ອຸປະກອນ'} ມີພຽງແຕ່ ${availableQty} ໃນສາງ!`, {
-          id: 'stock-error' // ປ້ອງກັນ Toast ເດັ້ງຊ້ອນກັນຫຼາຍອັນ
-        });
-        return; 
-      }
+    // 3. ຖ້າຈຳນວນທີ່ປ້ອນມາ (item.quantity) ຫຼາຍກວ່າທີ່ມີໃນສາງ
+    if (item.quantity > availableQty) {
+      toast.error(`❌ ${stockItem.item_name} ມີພຽງແຕ່ ${availableQty} ໃນສາງ!`, {
+        id: 'stock-error' // ປ້ອງກັນ Toast ເດັ້ງຊ້ອນ
+      });
+      return; // 🛑 ຢຸດການເຮັດວຽກບ່ອນນີ້ເລີຍ (ບໍ່ໃຫ້ໄປຫາການ create payload)
     }
   }
-  // ---------------------------------------------------
+}
+
+
 
   // 3. ປັບປຸງ Logic Recurring (ການຈອງຊ້ຳ)
-  const pattern = formData.get("recur_pattern") as string;
-  const isRecurring = pattern && pattern !== "none"; 
-  
+
+  const pattern = formData.get("recurring_pattern") as string;
+
+  const isRecurring = pattern && pattern !== "none";
+
+  const rawCount = formData.get("recur_count");
+
+
+
   const payload: any = {
+
     title: formData.get("title") as string,
+
     room_id: Number(formData.get("room_id")),
+
     user_id: Number(selectedBooking?.user_id || 1),
-    start_time: formData.get("start_time"), 
+
+    start_time: formData.get("start_time"),
+
     end_time: formData.get("end_time"),
+
     attendeeCount: Number(formData.get("attendeeCount")),
-    status: formData.get("status") || "Pending", 
-    
+
+    status: formData.get("status") || "Pending",
+
+   
+
     is_recurring: isRecurring ? 1 : 0,
+
     recur_pattern: pattern || 'none',
-    recurring_pattern: pattern || 'none', 
-    
-    recur_count: (pattern === 'none') ? 0 : (Number(formData.get("recur_count")) || 0),
-    
+
+    // ເພີ່ມ recurring_pattern ໃຫ້ກົງກັບ Payload ທີ່ Backend ໃຊ້
+
+    recurring_pattern: pattern || 'none',
+
+   
+
+    // ແກ້ໄຂ: ຖ້າບໍ່ປ້ອນເລກໃຫ້ເປັນ 0 ເພື່ອໃຫ້ສ້າງແຕ່ມື້ດຽວ (ປ້ອງກັນການແຖມມື້)
+
+   recur_count: (pattern === 'none') ? 0 : (Number(formData.get("recur_count")) || 0),
+
+   
+
     equipments: equipmentPayload,
+
     caterings: cateringPayload
+
   };
 
+
+
+  // ກວດສອບຂໍ້ມູນໃນ Console ກ່ອນສົ່ງແທ້
+
+  console.log("Payload ສົ່ງໄປ Backend:", payload);
+
+
+
   try {
+
     if (currentId) {
-      // ຖ້າມີ ID ແມ່ນການ Update (Delete ແລ້ວ Create ຕາມ Logic ເດີມຂອງເຈົ້າ)
-      await bookingService.delete(currentId); 
+
+      // ກໍລະນີແກ້ໄຂ: ລຶບອັນເກົ່າອອກກ່ອນ ແລ້ວສ້າງໃໝ່ (ຕາມ Logic ເດີມຂອງເຈົ້າ)
+
+      // ໝາຍເຫດ: ຖ້າຂໍ້ມູນເກົ່າມີຫຼາຍມື້ ມັນຈະລຶບແຕ່ ID ດຽວ, ມື້ອື່ນໆອາດຈະຍັງຄ້າງ
+
+      await bookingService.delete(currentId);
+
       await bookingService.create(payload);
+
       toast.success("✅ ແກ້ໄຂຂໍ້ມູນສຳເລັດ!");
+
     } else {
-      // ຖ້າບໍ່ມີ ID ແມ່ນການຈອງໃໝ່
+
+      // ກໍລະນີຈອງໃໝ່
+
       await bookingService.create(payload);
-      toast.success("บันทึกการจองสำเร็จ");
+
+      toast.success("ບັນທຶກການຈອງສຳເລັດ");
+
     }
 
+
+
     setIsModalOpen(false);
+
     if (typeof fetchData === 'function') {
-      await fetchData(); 
+
+      await fetchData();
+
     }
+
   } catch (err: any) {
+
     console.error("Submit Error:", err);
+
     toast.error(err.response?.data?.message || "ບໍ່ສາມາດບັນທຶກໄດ້");
+
   }
-};
+
+};  
 return (
   <>
   <Toaster

@@ -91,7 +91,7 @@ export default function EquipmentPage() {
               <FiBox size={16} />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">ຈັດການພັດສະດຸ</h1>
+              <h1 className="text-xl font-bold text-slate-900">ຈັດການອຸປະກອນ</h1>
               <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Inventory Management System</p>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function EquipmentPage() {
           <div className="bg-white rounded-2xl w-full max-w-md p-8 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
             <h2 className="text-xl font-bold mb-6 text-slate-800 flex items-center gap-3">
               <div className="w-2 h-7 bg-slate-900 rounded-full"></div>
-              {formData.id ? 'ແກ້ໄຂຂໍ້ມູນພັດສະດຸ' : 'ເພີ່ມພັດສະດຸໃໝ່'}
+              {formData.id ? 'ແກ້ໄຂຂໍ້ມູນອຸປະກອນ' : 'ເພີ່ມອຸປະກອນໃໝ່'}
             </h2>
             <form onSubmit={handleSave} className="space-y-5">
               <div className="space-y-1.5">
