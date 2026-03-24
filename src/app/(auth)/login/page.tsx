@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Lock, User, ArrowRight, Eye, EyeOff, ShieldCheck, AlertCircle } from "lucide-react";
+import { Lock, User, ArrowRight, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { login } from "@/lib/authen";
 import Cookies from "js-cookie";
 
@@ -10,11 +10,11 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   
-  // ໂຄງສ້າງຂໍ້ມູນຄືເກົ່າຕາມທີ່ເຈົ້າຕ້ອງການ
+  // 🟢 ເອົາ role: "user" ອອກຈາກນີ້ດີກວ່າ ເພາະຕອນ Login ເຮົາສົ່ງແຕ່ User/Pass ກໍພໍ
+  // ໃຫ້ Back-end ເປັນຄົນຕອບກັບມາເອງວ່າຄົນນີ້ແມ່ນ Role ຫຍັງ
   const [formData, setFormData] = useState({ 
     identity: "", 
-    password: "", 
-    role: "user" 
+    password: "" 
   });
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -23,22 +23,36 @@ export default function LoginPage() {
     setErrorMessage("");
 
     try {
-      console.log("ກຳລັງສົ່ງຂໍ້ມູນ:", formData);
-      const result = await login(formData);
-      
-      // ກວດສອບ Token ຈາກ Response
+      // 1. ລ້າງຂອງເກົ່າ
+      localStorage.clear();
+      Cookies.remove("token");
+
+      // 2. ສັ່ງ Login ຜ່ານ API ຮັບ Token ມາ
+      const result: any = await login(formData); 
       const token = result.access_token;
 
       if (token) {
+        // 🟢 3. ຖອດລະຫັດ Token (Decode JWT) ເພື່ອດຶງ Role ທີ່ Back-end ເຊື່ອງໄວ້!
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const currentRole = payload.role || "user"; // ບາດນີ້ມັນຈະດຶງຄຳວ່າ "admin" ອອກມາໄດ້ແລ້ວ!
+
+        // 4. ເກັບ Token
         Cookies.set("token", token, { expires: 7 }); 
         localStorage.setItem("token", token);
-        window.location.href = "/"; 
+        
+        // 5. ✅ ເກັບ Role ໃໝ່ທີ່ດຶງມາຈາກ Token
+        localStorage.setItem("role", currentRole.toLowerCase().trim());
+
+        console.log("🎉 ຖອດລະຫັດ Token ສຳເລັດ! Role ຄື:", currentRole);
+
+        // 6. ບັງຄັບ Refresh ໄປໜ້າຫຼັກ
+        window.location.replace("/"); 
       } else {
         setErrorMessage("ເຂົ້າສູ່ລະບົບສຳເລັດ ແຕ່ຫາ Token ບໍ່ເຫັນ");
       }
     } catch (error: any) {
-      const msg = error.response?.data?.message || "ຂໍ້ມູນການເຂົ້າລະບົບບໍ່ຖືກຕ້ອງ";
-      setErrorMessage(msg);
+      console.error("Login Error:", error);
+      setErrorMessage(error.response?.data?.message || "ຂໍ້ມູນການເຂົ້າລະບົບບໍ່ຖືກຕ້ອງ");
     } finally {
       setLoading(false);
     }
@@ -46,7 +60,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 text-black font-['Phetsarath_OT',_sans-serif]">
-      {/* ປຸ່ມກຳນົດ Font ຜ່ານ Style Tag ເພື່ອຄວາມແນ່ນອນ */}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Phetsarath+OT&display=swap');
         body {
@@ -73,7 +86,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* ຫ້ອງປ້ອນຂໍ້ມູນ: Identity */}
           <div className="space-y-2">
             <label className="text-sm font-bold ml-1 text-gray-700">ອີເມວ ຫຼື ຊື່ຜູ້ໃຊ້</label>
             <div className="relative">
@@ -89,7 +101,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* ຫ້ອງປ້ອນຂໍ້ມູນ: Password */}
           <div className="space-y-2">
             <label className="text-sm font-bold ml-1 text-gray-700">ລະຫັດຜ່ານ</label>
             <div className="relative">
@@ -111,7 +122,7 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
-          {/* ປຸ່ມ Submit */}
+
           <button
             type="submit"
             disabled={loading}
@@ -119,7 +130,7 @@ export default function LoginPage() {
           >
             {loading ? (
               <span className="flex items-center gap-2">
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>

@@ -1,115 +1,85 @@
 import * as Icons from "../icons";
 
-export const NAV_DATA = [
-  {
-    label: "ຂໍ້ມູນໜ້າຫຼັກ",
-    items: [
-      {
-        title: "ລວມຍອດຕ່າງໆ",
-         url: "/",
-          icon: Icons.HomeIcon,
-           items: [],
-      },
+interface SubItem {
+  title: string;
+  url: string;
+}
+
+interface MenuItem {
+  title: string;
+  url?: string;
+  icon: any;
+  items: SubItem[];
+}
+
+interface NavGroup {
+  label: string;
+  items: MenuItem[];
+}
+
+export const getNavData = (): NavGroup[] => {
+  // ດຶງ Role ມາ (ຖ້າມັນເປັນ null ໃຫ້ເປັນ user ໄວ້ກ່ອນ)
+  const role = typeof window !== "undefined" ? localStorage.getItem("role")?.toLowerCase() : "user";
+  
+  const isAdmin = role === "admin";
+
+  return [
     {
-        title: "ລາຍການສິ່ງຂອງ",
-        url: "/catering-items",
-        icon: Icons.Table, 
-        items: [],
-      },
-    {
-        title: "ລາຍການອຸປະກອນ",
-        url: "/equipment",
-        icon: Icons.Table, // ໃຊ້ໄອຄັອນຕາຕະລາງ ສື່ເຖິງການຈັດການລາຍການສາງ
-        items: [],
-      },
-      {
-        title: "ການອະນຸມັດ",
-        url: "/approvals",
-        icon: Icons.Calendar, // ໃຊ້ໄອຄັອນປະຕິທິນ ສື່ເຖິງການຈອງ ຫຼື ຕາຕະລາງຫ້ອງປະຊຸມ
-        items: [],
-      }, 
-       {
-        title: "ຈອງຫ້ອງປະຊູມ",
-        url: "/bookings",
-        icon: Icons.Calendar, // ໃຊ້ໄອຄັອນປະຕິທິນ ສື່ເຖິງການຈອງ ຫຼື ຕາຕະລາງຫ້ອງປະຊຸມ
-        items: [],
-      }, 
-      {
-        title: "ຈັດການຫ້ອງປະຊຸມ",
-        url: "/room",
-        icon: Icons.Calendar, // ໃຊ້ໄອຄັອນປະຕິທິນ ສື່ເຖິງການຈອງ ຫຼື ຕາຕະລາງຫ້ອງປະຊຸມ
-        items: [],
-      }, 
-      {
-        title: "ບັນທຶກພະນັກງານ",
-        url: "/user",
-        icon: Icons.User, // ໃຊ້ໄອຄັອນຜູ້ໃຊ້ ໂດຍກົງ
-        items: [],
-      },
-      /*{
-        title: "ຕົວຢ່າງ",
-        icon: Icons.Alphabet,
-        items: [
-          {
-            title: "Form Elements",
-            url: "/forms/form-elements",
-          },
-          {
-            title: "Form Layout",
-            url: "/forms/form-layout",
-          },
-        ],
-      },
-       {
-         title: "Tables",
-         url: "/tables",
-         icon: Icons.Table,
-         items: [
-           {
-             title: "Tables",
-             url: "/tables",
-           },
-         ],
-       },
-    ],
-  },
-  {
-     label: "OTHERS",
-     items: [
-       {
-         title: "Charts",
-         icon: Icons.PieChart,
-         items: [
-           {
-             title: "Basic Chart",
-             url: "/charts/basic-chart",
-           },
-         ],
-       },
-       {
-         title: "UI Elements",
-         icon: Icons.FourCircle,
-         items: [
-           {
-             title: "Alerts",
-             url: "/ui-elements/alerts",
-           },
-           {
-             title: "Buttons",
-             url: "/ui-elements/buttons",
-           },
-       ],
-       },
-       {
-         title: "Authentication",
-         icon: Icons.Authentication,
-         items: [
-           {
-             title: "Sign In",
-             url: "/auth/sign-in",
-           },
-         ],
-       },*/
-    ],
-   },
-];
+      label: "ຂໍ້ມູນໜ້າຫຼັກ",
+      items: [
+        // 🔴 ຖ້າເປັນ Admin ໃຫ້ໂຊ "ລວມຍອດ"
+        ...(isAdmin
+          ? [
+              {
+                title: "ລວມຍອດຕ່າງໆ",
+                url: "/",
+                icon: Icons.HomeIcon,
+                items: [],
+              },
+            ]
+          : []),
+        {
+          title: "ລາຍການສິ່ງຂອງ",
+          url: "/catering-items",
+          icon: Icons.Table,
+          items: [],
+        },
+        {
+          title: "ລາຍການອຸປະກອນ",
+          url: "/equipment",
+          icon: Icons.Table,
+          items: [],
+        },
+        {
+          title: "ການອະນຸມັດ",
+          url: "/approvals",
+          icon: Icons.Calendar,
+          items: [],
+        },
+        {
+          title: "ຈອງຫ້ອງປະຊູມ",
+          url: "/bookings",
+          icon: Icons.Calendar,
+          items: [],
+        },
+        {
+          title: "ຈັດການຫ້ອງປະຊຸມ",
+          url: "/room",
+          icon: Icons.Calendar,
+          items: [],
+        },
+        // 🔴 ຖ້າເປັນ Admin ໃຫ້ໂຊ "ບັນທຶກພະນັກງານ"
+        ...(isAdmin
+          ? [
+              {
+                title: "ບັນທຶກພະນັກງານ",
+                url: "/user",
+                icon: Icons.User,
+                items: [],
+              },
+            ]
+          : []),
+      ],
+    },
+  ];
+};
